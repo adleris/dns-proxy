@@ -36,12 +36,14 @@ struct dns_message {
     struct dns_header   header;
     struct dns_question question;
     struct dns_answer   answer;
+    struct dns_answer   additional;
 };
 
 
 int main(int argc, char* argv[]) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
+    int total_message_offset = 0;
     if (fread(&message_length, sizeof(uint16_t), 1, stdin) != 1) {
         exit(EXIT_FAILURE);
     }
@@ -72,6 +74,7 @@ int main(int argc, char* argv[]) {
     printf("nscount  %" PRId16 "\n", header.nscount);
     printf("arcount  %" PRId16 "\n", header.arcount);
 
+    total_message_offset += DNS_HEADER_LENGTH;
     message += DNS_HEADER_LENGTH;
 
     struct dns_question question;
@@ -101,6 +104,7 @@ int main(int argc, char* argv[]) {
     question.qtype  = ntohs(*(uint16_t*)(message+offset+1));
     question.qclass = ntohs(*(uint16_t*)(message+offset+3));
 
+    total_message_offset += offset + 5;
     message += offset+5;    // previous offset, plus 2 octets from qclass
 
     printf("---- Question ----\n");
@@ -121,7 +125,8 @@ int main(int argc, char* argv[]) {
         answer.rdlength = ntohs(*(uint16_t*)(message+10));
         answer.rdata = (uint16_t*)calloc(answer.rdlength,sizeof(uint16_t));
 
-        for (int i = 0; i < answer.rdlength; i += 2){
+        int i;
+        for (i = 0; i < answer.rdlength; i += 2){
             answer.rdata[i] = ntohs(*(uint16_t*)(message+12 + i));
         }
 
@@ -132,12 +137,22 @@ int main(int argc, char* argv[]) {
         printf("ttl      0x%08"PRIx32" (d%"PRId32")\n", answer.ttl, answer.ttl);
         printf("rdlength 0x%04"PRIx16" (d%"PRId32")\n", answer.rdlength, answer.rdlength);
         printf("rdata    ");
-        for (int i = 0; i < answer.rdlength; i += 2){
-            printf("%04"PRIx16"%c",answer.rdata[i], (i+2 >= answer.rdlength)?'\n':':');
+        for (int j = 0; j < answer.rdlength; j += 2){
+            printf("%04"PRIx16"%c",answer.rdata[j], (j+2 >= answer.rdlength)?'\n':':');
         }
+
+        total_message_offset += 12 + i;
+        message += 12 + i;
     } else {
         printf("---- (No Answer) ----\n");
     }
+
+    printf("---- Additional Record ----\n");
+    int left = (int)message_length - total_message_offset;
+    for (int k=0;k<left;k+=2){   /* k is in octets; +=2 means 2 octet sections */
+        printf("0x%04"PRIx16"\t", ntohs(*(uint16_t*)(message+k)));
+    }
+    printf("\n");
 
     return 0;
 }
