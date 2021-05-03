@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
     message_length = ntohs(message_length);
-    printf("scan in length %" PRId16 "\n", message_length);
+    printf("packet length %" PRId16 "\n", message_length);
 
     /* next, we want to malloc enough space to hold the entire DNS message */
     uint8_t *message = calloc(message_length, sizeof(uint8_t));
@@ -65,12 +65,12 @@ int main(int argc, char* argv[]) {
     header.arcount = ntohs(* (uint16_t*)(message + 10));
 
     printf("---- Header ----\n");
-    printf("id:      0x%04" PRIx16 "\n", header.id);
-    printf("flags:   0x%04" PRIx16 "\n", header.flags);
-    printf("qdcount: %" PRId16 "\n", header.qdcount);
-    printf("ancount: %" PRId16 "\n", header.ancount);
-    printf("nscount: %" PRId16 "\n", header.nscount);
-    printf("arcount: %" PRId16 "\n", header.arcount);
+    printf("id       0x%04" PRIx16 "\n", header.id);
+    printf("flags    0x%04" PRIx16 "\n", header.flags);
+    printf("qdcount  %" PRId16 "\n", header.qdcount);
+    printf("ancount  %" PRId16 "\n", header.ancount);
+    printf("nscount  %" PRId16 "\n", header.nscount);
+    printf("arcount  %" PRId16 "\n", header.arcount);
 
     message += DNS_HEADER_LENGTH;
 
@@ -107,8 +107,8 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < question.num_url_labels; i++){
         printf("url[%d] = %s\n", i, question.url[i]);
     }
-    printf("qtype :   %d (%s)\n", question.qtype,  (question.qtype == 1)?"A":((question.qtype == 28)?"AAAA":"other type"));
-    printf("qclass:   %d\n", question.qclass);
+    printf("qtype    %d (%s)\n", question.qtype,  (question.qtype == 1)?"A":((question.qtype == 28)?"AAAA":"other type"));
+    printf("qclass   %d%s\n", question.qclass, (question.qclass == 1)?" (IN)":"");
 
 
     /* ANSWER SECTION */
@@ -126,12 +126,12 @@ int main(int argc, char* argv[]) {
     }
 
     printf("---- Answer ----\n");
-    printf("name:  0x%04"PRIx16"\n", answer.name);
-    printf("type:  0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == 1)?"A":((answer.type == 28)?"AAAA":"other type"));
-    printf("class: 0x%04"PRIx16"\n", answer.class);
-    printf("ttl:   0x%08"PRIx32"\n", answer.ttl);
-    printf("rdlength: 0x%04"PRIx16"\n", answer.rdlength);
-    printf("rdata: ");
+    printf("name     0x%04"PRIx16"\n", answer.name);
+    printf("type     0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == 1)?"A":((answer.type == 28)?"AAAA":"other type"));
+    printf("class    0x%04"PRIx16"%s\n", answer.class, (answer.class == 1)?" (IN)":"");
+    printf("ttl      0x%08"PRIx32" (d%"PRId32")\n", answer.ttl, answer.ttl);
+    printf("rdlength 0x%04"PRIx16" (d%"PRId32")\n", answer.rdlength, answer.rdlength);
+    printf("rdata    ");
     for (int i = 0; i < answer.rdlength; i += 2){
         printf("%04"PRIx16"%c",answer.rdata[i], (i+2 >= answer.rdlength)?'\n':':');
     }
