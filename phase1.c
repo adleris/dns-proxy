@@ -59,23 +59,36 @@ int main(int argc, char* argv[]) {
 
     struct dns_question question;
     /* read in the url components */
-    question.url = calloc(MAX_URL_LABELS, sizeof(char**));
+    question.url = calloc(MAX_URL_LABELS, sizeof(char*));
     question.num_url_labels = 0;
 
-    /* put into a for loop */
-    uint16_t length = ntohs(* (uint16_t*)message);
-    printf("length: %"PRId16"\n", length);
 
-    question.num_url_labels++;
-    question.url[0] = calloc(length + 1, sizeof(char*));
-    for (int i = 0; i<length; i++){
-        // question.url[0][i] = (char) *(uint16_t*)(message + 1 + i);
-        question.url[0][i] = (char)message[1 + i];
+    int offset = 0;
+    uint8_t next_length;
+    // int next_length = ntohs(* (uint16_t*)message + offset)
+    for (int url_label = 0; (next_length = /*ntohs*/(* (uint8_t*)(message + offset)) ) != 0; url_label++){
+        printf("[[loop%d length: {%02"PRIx8"}]]\n",url_label, next_length);   fflush(stdout);
+
+        /* get mem for this url label */
+        question.url[url_label] = calloc(next_length + 1, sizeof(char));
+
+        for (int i = 0; i<next_length; i++){
+            question.url[url_label][i] = (char)message[offset + i + 1];
+            printf("%c\t",question.url[url_label][i]);
+        }
+        question.url[0][next_length] = '\0'; /* shouldn't need to do this if we calloc, but safer */
+
+        offset += next_length + 1; // plus ONE is length of the uintEIGHT_t number, and there's +next_length for the cars read
+        question.num_url_labels = url_label;
     }
-    question.url[0][length] = '\0'; /* shouldn't need to do this if we calloc, but safer */
+
+    for (int i = 0; i < question.num_url_labels; i++){
+        printf("%s\n", question.url[i]);
+    }
 
     printf("----\n");
     printf("url[0] = [%s]\n", question.url[0]);
+    printf("url[1] = [%s]\n", question.url[1]);
 
 
     printf("\n-.-.-.-.-.-.-\n");
