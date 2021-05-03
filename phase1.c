@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
     header.nscount = ntohs(* (uint16_t*)(message + 8));
     header.arcount = ntohs(* (uint16_t*)(message + 10));
 
+    printf("---- Header ----\n");
     printf("id:      0x%04" PRIx16 "\n", header.id);
     printf("flags:   0x%04" PRIx16 "\n", header.flags);
     printf("qdcount: %" PRId16 "\n", header.qdcount);
@@ -65,36 +66,26 @@ int main(int argc, char* argv[]) {
 
     int offset = 0;
     uint8_t next_length;
-    // int next_length = ntohs(* (uint16_t*)message + offset)
-    for (int url_label = 0; (next_length = /*ntohs*/(* (uint8_t*)(message + offset)) ) != 0; url_label++){
-        printf("[[loop%d length: {%02"PRIx8"}]]\n",url_label, next_length);   fflush(stdout);
+
+    #define LENGTH_NUMBER_BYTES 1 /* the number of bytes that the value storing next_length takes up */
+    for (int url_label = 0; (next_length = (* (uint8_t*)(message + offset)) ) != 0; url_label++){
 
         /* get mem for this url label */
         question.url[url_label] = calloc(next_length + 1, sizeof(char));
 
         for (int i = 0; i<next_length; i++){
-            question.url[url_label][i] = (char)message[offset + i + 1];
-            printf("%c\t",question.url[url_label][i]);
+            question.url[url_label][i] = (char)message[offset + i + LENGTH_NUMBER_BYTES];
         }
         question.url[0][next_length] = '\0'; /* shouldn't need to do this if we calloc, but safer */
 
-        offset += next_length + 1; // plus ONE is length of the uintEIGHT_t number, and there's +next_length for the cars read
-        question.num_url_labels = url_label;
+        offset += next_length + LENGTH_NUMBER_BYTES; // plus ONE is length of the uintEIGHT_t number, and there's +next_length for the cars read
+        question.num_url_labels = url_label + 1;
     }
 
+    printf("---- Question ----\n");
     for (int i = 0; i < question.num_url_labels; i++){
-        printf("%s\n", question.url[i]);
+        printf("url[%d] = %s\n", i, question.url[i]);
     }
 
-    printf("----\n");
-    printf("url[0] = [%s]\n", question.url[0]);
-    printf("url[1] = [%s]\n", question.url[1]);
-
-
-    printf("\n-.-.-.-.-.-.-\n");
-    for (int k=0; k<15;k++){
-        printf("[%c]", (char) message[1+k]);
-    }
-    printf("\n");
     return 0;
 }
