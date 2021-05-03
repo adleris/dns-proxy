@@ -82,10 +82,17 @@ int main(int argc, char* argv[]) {
         question.num_url_labels = url_label + 1;
     }
 
+    question.qtype  = ntohs(*(uint16_t*)(message+offset+1));
+    question.qclass = ntohs(*(uint16_t*)(message+offset+3));
+
+    message += offset+3;
+
     printf("---- Question ----\n");
     for (int i = 0; i < question.num_url_labels; i++){
         printf("url[%d] = %s\n", i, question.url[i]);
     }
+    printf("qtype :   %d (%s)\n", question.qtype,  (question.qtype == 1)?"A":((question.qtype == 28)?"AAAA":"other class"));
+    printf("qclass:   %d\n", question.qclass);
 
     return 0;
 }
