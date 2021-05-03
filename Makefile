@@ -3,8 +3,8 @@
 # OBJ - compiled source files that should be linked
 # COPT - compiler flags
 # BIN - binary
-CC=clang
-OBJ=helper1.o
+CC=gcc
+OBJ=#helper1.o
 COPT=-Wall -Wpedantic -g
 BIN_PHASE1=phase1
 BIN_PHASE2=dns_query
