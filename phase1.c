@@ -112,28 +112,31 @@ int main(int argc, char* argv[]) {
 
 
     /* ANSWER SECTION */
+    if (header.ancount > 0) {
+        struct dns_answer answer;
+        answer.name  = ntohs(*(uint16_t*)message);
+        answer.type  = ntohs(*(uint16_t*)(message+2));
+        answer.class = ntohs(*(uint16_t*)(message+4));
+        answer.ttl   = ntohl(*(uint32_t*)(message+6));
+        answer.rdlength = ntohs(*(uint16_t*)(message+10));
+        answer.rdata = (uint16_t*)calloc(answer.rdlength,sizeof(uint16_t));
 
-    struct dns_answer answer;
-    answer.name  = ntohs(*(uint16_t*)message);
-    answer.type  = ntohs(*(uint16_t*)(message+2));
-    answer.class = ntohs(*(uint16_t*)(message+4));
-    answer.ttl   = ntohl(*(uint32_t*)(message+6));
-    answer.rdlength = ntohs(*(uint16_t*)(message+10));
-    answer.rdata = (uint16_t*)calloc(answer.rdlength,sizeof(uint16_t));
+        for (int i = 0; i < answer.rdlength; i += 2){
+            answer.rdata[i] = ntohs(*(uint16_t*)(message+12 + i));
+        }
 
-    for (int i = 0; i < answer.rdlength; i += 2){
-        answer.rdata[i] = ntohs(*(uint16_t*)(message+12 + i));
-    }
-
-    printf("---- Answer ----\n");
-    printf("name     0x%04"PRIx16"\n", answer.name);
-    printf("type     0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == 1)?"A":((answer.type == 28)?"AAAA":"other type"));
-    printf("class    0x%04"PRIx16"%s\n", answer.class, (answer.class == 1)?" (IN)":"");
-    printf("ttl      0x%08"PRIx32" (d%"PRId32")\n", answer.ttl, answer.ttl);
-    printf("rdlength 0x%04"PRIx16" (d%"PRId32")\n", answer.rdlength, answer.rdlength);
-    printf("rdata    ");
-    for (int i = 0; i < answer.rdlength; i += 2){
-        printf("%04"PRIx16"%c",answer.rdata[i], (i+2 >= answer.rdlength)?'\n':':');
+        printf("---- Answer ----\n");
+        printf("name     0x%04"PRIx16"\n", answer.name);
+        printf("type     0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == 1)?"A":((answer.type == 28)?"AAAA":"other type"));
+        printf("class    0x%04"PRIx16"%s\n", answer.class, (answer.class == 1)?" (IN)":"");
+        printf("ttl      0x%08"PRIx32" (d%"PRId32")\n", answer.ttl, answer.ttl);
+        printf("rdlength 0x%04"PRIx16" (d%"PRId32")\n", answer.rdlength, answer.rdlength);
+        printf("rdata    ");
+        for (int i = 0; i < answer.rdlength; i += 2){
+            printf("%04"PRIx16"%c",answer.rdata[i], (i+2 >= answer.rdlength)?'\n':':');
+        }
+    } else {
+        printf("---- (No Answer) ----\n");
     }
 
     return 0;
