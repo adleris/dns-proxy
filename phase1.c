@@ -23,6 +23,22 @@ struct dns_question {
     uint16_t   qclass;
 };
 
+struct dns_answer {
+    uint16_t  name;
+    uint16_t  type;
+    uint16_t  class;
+    uint32_t  ttl;
+    uint16_t  rdlength; /* length is in OCTETS, not UINT16 */
+    uint16_t *rdata;    /* length given by rdlength IPv4: 4B, IPv6: 8B*/
+};
+
+struct dns_message {
+    struct dns_header   header;
+    struct dns_question question;
+    struct dns_answer   answer;
+};
+
+
 int main(int argc, char* argv[]) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
@@ -85,14 +101,40 @@ int main(int argc, char* argv[]) {
     question.qtype  = ntohs(*(uint16_t*)(message+offset+1));
     question.qclass = ntohs(*(uint16_t*)(message+offset+3));
 
-    message += offset+3;
+    message += offset+5;    // previous offset, plus 2 octets from qclass
 
     printf("---- Question ----\n");
     for (int i = 0; i < question.num_url_labels; i++){
         printf("url[%d] = %s\n", i, question.url[i]);
     }
-    printf("qtype :   %d (%s)\n", question.qtype,  (question.qtype == 1)?"A":((question.qtype == 28)?"AAAA":"other class"));
+    printf("qtype :   %d (%s)\n", question.qtype,  (question.qtype == 1)?"A":((question.qtype == 28)?"AAAA":"other type"));
     printf("qclass:   %d\n", question.qclass);
+
+
+    /* ANSWER SECTION */
+
+    struct dns_answer answer;
+    answer.name  = ntohs(*(uint16_t*)message);
+    answer.type  = ntohs(*(uint16_t*)(message+2));
+    answer.class = ntohs(*(uint16_t*)(message+4));
+    answer.ttl   = ntohl(*(uint32_t*)(message+6));
+    answer.rdlength = ntohs(*(uint16_t*)(message+10));
+    answer.rdata = (uint16_t*)calloc(answer.rdlength,sizeof(uint16_t));
+
+    for (int i = 0; i < answer.rdlength; i += 2){
+        answer.rdata[i] = ntohs(*(uint16_t*)(message+12 + i));
+    }
+
+    printf("---- Answer ----\n");
+    printf("name:  0x%04"PRIx16"\n", answer.name);
+    printf("type:  0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == 1)?"A":((answer.type == 28)?"AAAA":"other type"));
+    printf("class: 0x%04"PRIx16"\n", answer.class);
+    printf("ttl:   0x%08"PRIx32"\n", answer.ttl);
+    printf("rdlength: 0x%04"PRIx16"\n", answer.rdlength);
+    printf("rdata: ");
+    for (int i = 0; i < answer.rdlength; i += 2){
+        printf("%04"PRIx16"%c",answer.rdata[i], (i+2 >= answer.rdlength)?'\n':':');
+    }
 
     return 0;
 }
