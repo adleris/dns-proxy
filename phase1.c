@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include  <sys/socket.h>
+
 #define DNS_HEADER_LENGTH 12 /*bytes*/
 #define MAX_URL_LABELS 255   /* given by URL specifications I'm pretty sure */
 
@@ -39,6 +41,8 @@ struct dns_message {
     struct dns_answer   additional;
 };
 
+
+char *ipv6_print_string(uint16_t *addr);
 
 int main(int argc, char* argv[]) {
     /* read in the length of the message and fix byte-ordering */
@@ -140,6 +144,7 @@ int main(int argc, char* argv[]) {
         for (int j = 0; j < answer.rdlength; j += 2){
             printf("%04"PRIx16"%c",answer.rdata[j], (j+2 >= answer.rdlength)?'\n':':');
         }
+        printf(" |\n +---->  (%s)\n", ipv6_print_string(answer.rdata));
 
         total_message_offset += 12 + i;
         message += 12 + i;
@@ -155,4 +160,49 @@ int main(int argc, char* argv[]) {
     printf("\n");
 
     return 0;
+}
+
+char *
+ipv6_print_string(uint16_t *addr){
+#define OWN_IMPLEM 0
+#if OWN_IMPLEM 
+    printf(" |       ");
+    /* max possible length of the string + null byte */
+    #define IPV6_STRING_LENGTH 39+1
+    #define IVP6_NUM_SECTIONS 8
+    char *print = (char*)calloc(IPV6_STRING_LENGTH, sizeof(char));
+    int length = 0;
+    int has_concat = 0;
+    int in_concat_section = 0;
+    for (int i=0; i<IVP6_NUM_SECTIONS; i++){
+        printf("[%d]=%"PRIx16" ", i, addr[i*2]);
+
+        if (addr[i*2] == 0 && !has_concat){
+        /* first part of a concat section */
+            has_concat = 1;
+            in_concat_section = 1;
+            length += sprintf(print+length, ":");
+        } else {
+            in_concat_section = 0;
+            length += sprintf(print+length, "%"PRIx16,addr[i*2]);
+            length += sprintf(print+length, ":");
+        }
+        if (!in_concat_section) {
+            /* we just ended a concat section */
+            length += sprintf(print+length, ":");
+        }
+    }
+    printf("\n");
+    return print;
+#else
+    uint16_t buf[sizeof(struct in6_addr)];
+
+    for (int i=0; i < 8; i++){
+        buf[i] = ntohs(addr[i*2]); /* why do we have to call ntohs here? */
+    }
+
+    char *print = (char*)calloc(INET6_ADDRSTRLEN, sizeof(char));
+    inet_ntop(AF_INET6, buf, print, INET6_ADDRSTRLEN);
+    return print;
+#endif
 }
