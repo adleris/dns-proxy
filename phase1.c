@@ -144,7 +144,12 @@ int main(int argc, char* argv[]) {
         for (int j = 0; j < answer.rdlength; j += 2){
             printf("%04"PRIx16"%c",answer.rdata[j], (j+2 >= answer.rdlength)?'\n':':');
         }
-        printf(" |\n +---->  (%s)\n", ipv6_print_string(answer.rdata));
+        /* print out ip address representation */
+        if (answer.rdlength == 16 /* ipv6 length in octets */) {
+            char *ipv6_string = ipv6_print_string(answer.rdata);
+            printf("         (%s)\n", ipv6_string);
+            free(ipv6_string);
+        } /* else skip */
 
         total_message_offset += 12 + i;
         message += 12 + i;
@@ -164,37 +169,6 @@ int main(int argc, char* argv[]) {
 
 char *
 ipv6_print_string(uint16_t *addr){
-#define OWN_IMPLEM 0
-#if OWN_IMPLEM 
-    printf(" |       ");
-    /* max possible length of the string + null byte */
-    #define IPV6_STRING_LENGTH 39+1
-    #define IVP6_NUM_SECTIONS 8
-    char *print = (char*)calloc(IPV6_STRING_LENGTH, sizeof(char));
-    int length = 0;
-    int has_concat = 0;
-    int in_concat_section = 0;
-    for (int i=0; i<IVP6_NUM_SECTIONS; i++){
-        printf("[%d]=%"PRIx16" ", i, addr[i*2]);
-
-        if (addr[i*2] == 0 && !has_concat){
-        /* first part of a concat section */
-            has_concat = 1;
-            in_concat_section = 1;
-            length += sprintf(print+length, ":");
-        } else {
-            in_concat_section = 0;
-            length += sprintf(print+length, "%"PRIx16,addr[i*2]);
-            length += sprintf(print+length, ":");
-        }
-        if (!in_concat_section) {
-            /* we just ended a concat section */
-            length += sprintf(print+length, ":");
-        }
-    }
-    printf("\n");
-    return print;
-#else
     uint16_t buf[sizeof(struct in6_addr)];
 
     for (int i=0; i < 8; i++){
@@ -204,5 +178,4 @@ ipv6_print_string(uint16_t *addr){
     char *print = (char*)calloc(INET6_ADDRSTRLEN, sizeof(char));
     inet_ntop(AF_INET6, buf, print, INET6_ADDRSTRLEN);
     return print;
-#endif
 }
