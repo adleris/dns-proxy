@@ -4,7 +4,7 @@
 # COPT - compiler flags
 # BIN - binary
 CC=gcc
-OBJ=#helper1.o
+OBJ=dns.o
 COPT=-Wall -Wpedantic -g
 BIN_PHASE1=phase1
 BIN_PHASE2=dns_query
