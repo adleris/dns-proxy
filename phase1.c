@@ -136,27 +136,31 @@ void phase1_output(struct dns_message dns){
 
     char *domain_name = (char*)calloc(255,sizeof(char));
     /* request */
-    for (int u=0; u<dns.question.num_url_labels; u++){
-        strcat(domain_name, dns.question.url[u]);
-        if (u+1 < dns.question.num_url_labels){
-            strcat(domain_name, ".");
+    if (dns.header.ancount == 0){
+        for (int u=0; u<dns.question.num_url_labels; u++){
+            strcat(domain_name, dns.question.url[u]);
+            if (u+1 < dns.question.num_url_labels){
+                strcat(domain_name, ".");
+            }
         }
-    }
-    print_timestamp(fp);
-    fprintf(fp, " requested %s\n", domain_name);
+        print_timestamp(fp);
+        fprintf(fp, " requested %s\n", domain_name);
+    } 
 
+    /* AAAA record? */
     if (dns.question.qtype == TYPE_AAAA){
 
-        /* check if we have an answer and print that */
-        if (dns.answer.rdlength != 0){
+        /* answer */
+        if (dns.header.ancount > 0){
             print_timestamp(fp);
             fprintf(fp, " %s is at %s\n", domain_name, ipv6_print_string(dns.answer.rdata));
         }
-    } else { /* not AAAA */
+    } else { /* not AAAA, unimplemented request */
         print_timestamp(fp);
         fprintf(fp, " unimplemented request\n");
     }
-    
+
+
     fclose(fp);
     free(domain_name);
 }
