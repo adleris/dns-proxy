@@ -32,5 +32,5 @@ format:
 	clang-format -i *.c *.h
 
 clean:
-	# implement this, to remove $(BIN_PHASE[12]) and any .o files
-	rm -f $(OBJ) $(BIN_PHASE1) $(BIN_PHASE)
+	rm -f $(OBJ) $(BIN_PHASE1) $(BIN_PHASE2)  
+	rm -rf $(BIN_PHASE1).dSYM $(BIN_PHASE2).dSYM
