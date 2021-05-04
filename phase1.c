@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i<next_length; i++){
             question.url[url_label][i] = (char)message[offset + i + LENGTH_NUMBER_BYTES];
         }
-        question.url[0][next_length] = '\0'; /* shouldn't need to do this if we calloc, but safer */
+        question.url[url_label][next_length] = '\0'; /* shouldn't need to do this if we calloc, but safer */
 
         offset += next_length + LENGTH_NUMBER_BYTES; // plus ONE is length of the uintEIGHT_t number, and there's +next_length for the cars read
         question.num_url_labels = url_label + 1;
@@ -133,6 +133,12 @@ void phase1_output(struct dns_message dns){
     /* setup */
     FILE *fp;
     fp = fopen(FILENAME, "w");
+
+    printf("url contents: ");
+    for (int i=0; i<25; i++){
+        printf("%c", *(char*)(dns.question.url + i));
+    }
+    printf("\n");
 
     char *domain_name = (char*)calloc(255,sizeof(char));
     for (int u=0; u<dns.question.num_url_labels; u++){
