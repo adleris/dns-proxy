@@ -19,8 +19,8 @@ void print_dns_question(struct dns_question question){
     for (int i = 0; i < question.num_url_labels; i++){
         printf("url[%d] = %s\n", i, question.url[i]);
     }
-    printf("qtype    %d (%s)\n", question.qtype,  (question.qtype == 1)?"A":((question.qtype == 28)?"AAAA":"other type"));
-    printf("qclass   %d%s\n", question.qclass, (question.qclass == 1)?" (IN)":"");
+    printf("qtype    %d (%s)\n", question.qtype,  (question.qtype == TYPE_A)?"A":((question.qtype == TYPE_AAAA)?"AAAA":"other type"));
+    printf("qclass   %d%s\n", question.qclass, (question.qclass == CLASS_IN)?" (IN)":"");
     RST_COLOUR();
 }
 
@@ -28,8 +28,8 @@ void print_dns_answer(struct dns_answer answer){
     COLOUR();
     printf("---- Answer ----\n");
     printf("name     0x%04"PRIx16"\n", answer.name);
-    printf("type     0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == 1)?"A":((answer.type == 28)?"AAAA":"other type"));
-    printf("class    0x%04"PRIx16"%s\n", answer.class, (answer.class == 1)?" (IN)":"");
+    printf("type     0x%04"PRIx16" (%s)\n", answer.type,  (answer.type == TYPE_A)?"A":((answer.type == TYPE_AAAA)?"AAAA":"other type"));
+    printf("class    0x%04"PRIx16"%s\n", answer.class, (answer.class == CLASS_IN)?" (IN)":"");
     printf("ttl      0x%08"PRIx32" (d%"PRId32")\n", answer.ttl, answer.ttl);
     printf("rdlength 0x%04"PRIx16" (d%"PRId32")\n", answer.rdlength, answer.rdlength);
     printf("rdata    ");

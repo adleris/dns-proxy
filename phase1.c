@@ -4,11 +4,16 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <string.h>
+#include <time.h>
 
 #include "dns.h"
 
 #define DNS_HEADER_LENGTH 12 /*bytes*/
 #define MAX_URL_LABELS 255   /* given by URL specifications I'm pretty sure */
+
+
+void phase1_output(struct dns_message);
 
 int main(int argc, char* argv[]) {
     /* read in the length of the message and fix byte-ordering */
@@ -77,9 +82,9 @@ int main(int argc, char* argv[]) {
     print_dns_question(question);
 
 
+    struct dns_answer answer = {0};
     /* ANSWER SECTION */
     if (header.ancount > 0) {
-        struct dns_answer answer;
         answer.name  = ntohs(*(uint16_t*)message);
         answer.type  = ntohs(*(uint16_t*)(message+2));
         answer.class = ntohs(*(uint16_t*)(message+4));
@@ -97,13 +102,14 @@ int main(int argc, char* argv[]) {
         total_message_offset += 12 + i;
         message += 12 + i;
     } else {
+        answer.rdlength = 0; // make sure it's 0 // THIS IS DUMB, POTENTIALLY? NO IDEA. use pointers
 #if DNS_VERBOSE
         printf("---- (No Answer) ----\n");
 #endif
     }
 
-    int left = (int)message_length - total_message_offset;
 #if DNS_VERBOSE
+    int left = (int)message_length - total_message_offset;
     printf("---- Additional Record ----\n");
     for (int k=0;k<left;k+=2){   /* k is in octets; +=2 means 2 octet sections */
         printf("0x%04"PRIx16"\t", ntohs(*(uint16_t*)(message+k)));
@@ -111,5 +117,47 @@ int main(int argc, char* argv[]) {
     printf("\n");
 #endif
 
+    struct dns_message dns_message;
+    dns_message.header = header;
+    dns_message.question = question;
+    dns_message.answer = answer;
+    // dns_message.additional 
+    /* task output */
+    phase1_output(dns_message);
     return 0;
+}
+
+void phase1_output(struct dns_message dns){
+    /* timestamp */
+    char *timestr = (char*)calloc(255, sizeof(char));
+    time_t now;
+    struct tm *info;
+    time(&now);
+    info = localtime(&now);
+    strftime(timestr, 255, "%FT%T%z", info);
+    printf("%s", timestr);
+    free(timestr);
+
+    char *domain_name = (char*)calloc(255,sizeof(char));
+    /* request */
+    for (int u=0; u<dns.question.num_url_labels; u++){
+        strcat(domain_name, dns.question.url[u]);
+        if (u+1 < dns.question.num_url_labels){
+            strcat(domain_name, ".");
+        }
+    }
+    printf(" requested %s\n", domain_name);
+
+    if (dns.question.qtype != TYPE_AAAA){
+
+        /* check if we have an answer and print that */
+        if (dns.answer.rdlength != 0){
+            printf(" %s is at %s\n", domain_name, ipv6_print_string(dns.answer.rdata));
+        }
+    } else { /* not AAAA */
+        printf(" unimplemented request\n");
+    }
+    
+
+    free(domain_name);
 }

@@ -12,7 +12,6 @@
 #define DNS_USE_COLOUR 0
 #define DNS_VERBOSE    0
 
-
 #if DNS_USE_COLOUR
 #define SET_COLOUR(c) printf("\033[%dm",c)
 #define RST_COLOUR() printf("\033[0m")
@@ -22,6 +21,13 @@
 #define RST_COLOUR() 
 #define COLOUR()
 #endif /* USE_COLOUR */
+
+
+/* CONSTANTS */
+#define TYPE_A      1
+#define TYPE_AAAA   28
+#define CLASS_IN    1
+
 
 struct dns_header {
     uint16_t id;
