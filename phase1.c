@@ -130,19 +130,21 @@ int main(int argc, char* argv[]) {
 }
 
 void phase1_output(struct dns_message dns){
-    
+    /* setup */
     FILE *fp;
     fp = fopen(FILENAME, "w");
 
     char *domain_name = (char*)calloc(255,sizeof(char));
+    for (int u=0; u<dns.question.num_url_labels; u++){
+        strcat(domain_name, dns.question.url[u]);
+        if (u+1 < dns.question.num_url_labels){
+            strcat(domain_name, ".");
+        }
+    }
+
+
     /* request */
     if (dns.header.ancount == 0){
-        for (int u=0; u<dns.question.num_url_labels; u++){
-            strcat(domain_name, dns.question.url[u]);
-            if (u+1 < dns.question.num_url_labels){
-                strcat(domain_name, ".");
-            }
-        }
         print_timestamp(fp);
         fprintf(fp, " requested %s\n", domain_name);
     } 
