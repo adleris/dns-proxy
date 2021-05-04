@@ -14,6 +14,7 @@
 
 
 void phase1_output(struct dns_message);
+void print_timestamp(void);
 
 int main(int argc, char* argv[]) {
     /* read in the length of the message and fix byte-ordering */
@@ -128,16 +129,7 @@ int main(int argc, char* argv[]) {
 }
 
 void phase1_output(struct dns_message dns){
-    /* timestamp */
-    char *timestr = (char*)calloc(255, sizeof(char));
-    time_t now;
-    struct tm *info;
-    time(&now);
-    info = localtime(&now);
-    strftime(timestr, 255, "%FT%T%z", info);
-    printf("%s", timestr);
-    free(timestr);
-
+    
     char *domain_name = (char*)calloc(255,sizeof(char));
     /* request */
     for (int u=0; u<dns.question.num_url_labels; u++){
@@ -146,18 +138,33 @@ void phase1_output(struct dns_message dns){
             strcat(domain_name, ".");
         }
     }
+    print_timestamp();
     printf(" requested %s\n", domain_name);
 
     if (dns.question.qtype != TYPE_AAAA){
 
         /* check if we have an answer and print that */
         if (dns.answer.rdlength != 0){
+            print_timestamp();
             printf(" %s is at %s\n", domain_name, ipv6_print_string(dns.answer.rdata));
         }
     } else { /* not AAAA */
+    print_timestamp();
         printf(" unimplemented request\n");
     }
     
 
     free(domain_name);
+}
+
+/* timestamp */
+void print_timestamp(void){
+    char *timestr = (char*)calloc(255, sizeof(char));
+    time_t now;
+    struct tm *info;
+    time(&now);
+    info = localtime(&now);
+    strftime(timestr, 255, "%FT%T%z", info);
+    printf("%s", timestr);
+    free(timestr);
 }
