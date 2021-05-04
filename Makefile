@@ -33,3 +33,4 @@ format:
 
 clean:
 	# implement this, to remove $(BIN_PHASE[12]) and any .o files
+	rm -f $(OBJ) $(BIN_PHASE1) $(BIN_PHASE)
