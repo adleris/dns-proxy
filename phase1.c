@@ -134,12 +134,6 @@ void phase1_output(struct dns_message dns){
     FILE *fp;
     fp = fopen(FILENAME, "w");
 
-    printf("url contents: ");
-    for (int i=0; i<25; i++){
-        printf("%c", *(char*)(dns.question.url + i));
-    }
-    printf("\n");
-
     char *domain_name = (char*)calloc(255,sizeof(char));
     for (int u=0; u<dns.question.num_url_labels; u++){
         strcat(domain_name, dns.question.url[u]);
@@ -168,7 +162,7 @@ void phase1_output(struct dns_message dns){
         fprintf(fp, " unimplemented request\n");
     }
 
-
+    fflush(fp);
     fclose(fp);
     free(domain_name);
 }
