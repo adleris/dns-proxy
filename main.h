@@ -15,4 +15,8 @@
 
 #define ACCEPTED_QTYPE TYPE_AAAA
 
+
+/* create a new socket (calls socket, bind, listen) */
+int new_listening_socket(char *port);
+
 #endif
