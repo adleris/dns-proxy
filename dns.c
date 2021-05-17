@@ -2,7 +2,7 @@
 
 
 /* phase 1 */
-struct dns_message parse_request(int fd) {
+size_t parse_request(int fd, struct dns_message *dns_request) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
     int total_message_offset = 0;
@@ -106,14 +106,14 @@ struct dns_message parse_request(int fd) {
     printf("\n");
 #endif
 
-    struct dns_message dns_message;
-    dns_message.header = header;
-    dns_message.question = question;
-    dns_message.answer = answer;
-    // dns_message.additional 
+    /* set outputs */
+    dns_request->header = header;
+    dns_request->question = question;
+    dns_request->answer = answer;
+    // dns_request->additional 
     /* task output */
-    phase1_output(dns_message);
-    return dns_message;
+    phase1_output(*dns_request);
+    return message_length * sizeof(uint16_t);
 }
 
 

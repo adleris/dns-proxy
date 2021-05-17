@@ -1,10 +1,12 @@
 #include "main.h"
 #include "dns.h"
 
+int dns_upstream_connection(char *address, char *port, struct dns_message *response, struct dns_message *request, int request_len);
+
 int main(int argc, char* argv[]) {
     
     int sockfd, newsockfd, n;
-	char buffer[256];
+
 	struct sockaddr_storage client_addr;
 	socklen_t client_addr_size;
 
@@ -21,64 +23,14 @@ int main(int argc, char* argv[]) {
 			exit(EXIT_FAILURE);
 		}
 
-
-		struct dns_message dns_request = parse_request(newsockfd);
+		struct dns_message dns_request = {0};
+		size_t dns_request_len = parse_request(newsockfd, &dns_request);
 		if (is_AAAA_record(dns_request) == false){
 			set_rcode(&dns_request, RCODE_ERROR);
 		} else {
 			/* AAAA request is made, forward along to the upstream server */
-
-			int s, upstream_sockfd;
-			struct addrinfo hints, *servinfo, *rp;
-
-			memset(&hints, 0, sizeof hints);
-			hints.ai_family = AF_INET;
-			hints.ai_socktype = SOCK_STREAM;
-			s = getaddrinfo(argv[1], argv[2], &hints, &servinfo);
-			if (s != 0) {
-				fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-				exit(EXIT_FAILURE);
-			}
-			printf("eeeeeeeee?\n");
-			for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
-				upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-				if (upstream_sockfd == -1)
-					continue;
-
-				if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
-					break; // success
-
-				close(upstream_sockfd);	/* close the failed socket */
-			}
-			printf("fffffffffff?\n");
-			if (rp == NULL) {
-				fprintf(stderr, "client: failed to connect\n");
-				exit(EXIT_FAILURE);
-			}
-			freeaddrinfo(servinfo);
-
-			// Send message to server
-			n = write(upstream_sockfd, &dns_request, 68);
-			if (n < 0) {
-				perror("socket");
-				exit(EXIT_FAILURE);
-			}
-			printf("gggggggggggggg?\n");
-
-			// Read message from server
-			n = read(upstream_sockfd, buffer, 255);
-			if (n < 0) {
-				perror("read");
-				exit(EXIT_FAILURE);
-			}
-			printf("hhhhhhhhh?\n");
-			// Null-terminate string
-			buffer[n] = '\0';
-			printf("%s\n", buffer);
-
-			close(upstream_sockfd);
-
-			printf("finished?\n");
+			struct dns_message dns_response = {0};
+			int response_len = dns_upstream_connection(argv[1], argv[2], &dns_response, &dns_request, dns_request_len);
 		}
 
 
@@ -144,4 +96,62 @@ int new_listening_socket(char *address, char *port){
 	}
 
     return sockfd;
+}
+
+
+int dns_upstream_connection(char *address, char *port, struct dns_message *response, struct dns_message *request, int request_len){
+	char buffer[256];
+	int s, upstream_sockfd;
+	int read_len=0, n;
+	struct addrinfo hints, *servinfo, *rp;
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	s = getaddrinfo(address, port, &hints, &servinfo);
+	if (s != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+		exit(EXIT_FAILURE);
+	}
+	printf("eeeeeeeee?\n");
+	for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
+		upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (upstream_sockfd == -1)
+			continue;
+
+		if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
+			break; // success
+
+		close(upstream_sockfd);	/* close the failed socket */
+	}
+	printf("fffffffffff?\n");
+	if (rp == NULL) {
+		fprintf(stderr, "client: failed to connect\n");
+		exit(EXIT_FAILURE);
+	}
+	freeaddrinfo(servinfo);
+
+	// Send message to server
+	n = write(upstream_sockfd, request, request_len);
+	if (n < 0) {
+		perror("socket");
+		exit(EXIT_FAILURE);
+	}
+	printf("gggggggggggggg?\n");
+
+	// Read message from server
+	n = read(upstream_sockfd, buffer, 1);
+	if (n < 0) {
+		perror("read");
+		exit(EXIT_FAILURE);
+	}
+	printf("hhhhhhhhh?\n");
+	// Null-terminate string
+	buffer[n] = '\0';
+	printf("%s\n", buffer);
+
+	close(upstream_sockfd);
+
+	printf("finished?\n");
+	return n;
 }
