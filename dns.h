@@ -3,11 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <unistd.h>
 
 /* DISPLAY SETTINGS */
 #define DNS_USE_COLOUR 1
@@ -34,6 +35,11 @@
 #define MAX_URL_LABELS    255   /* given by URL specifications I'm pretty sure */
 
 #define FILENAME          "dns_svr.log"
+
+
+/* bitwise flags */
+/* RCODE is 4 bits long */
+#define RCODE_ERROR 0x4     /* "not implemented" */
 
 
 struct dns_header {
@@ -72,6 +78,9 @@ struct dns_message {
 #include "output.h"
 
 struct dns_message parse_request(int fd);
+
+bool is_AAAA_record(struct dns_message dns_request);
+void set_rcode(struct dns_message *dns_request, uint16_t code);
 
 void print_dns_header(struct dns_header header);
 void print_dns_question(struct dns_question question);

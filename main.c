@@ -1,4 +1,5 @@
 #include "main.h"
+#include "dns.h"
 
 int main(int argc, char* argv[]) {
     
@@ -7,42 +8,98 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_storage client_addr;
 	socklen_t client_addr_size;
 
-	sockfd = new_listening_socket(QUERY_PORT_STR);
+	/* set up answer and response loop */
+	do {
+		sockfd = new_listening_socket(NULL, QUERY_PORT_STR);
 
-	// Accept a connection - blocks until a connection is ready to be accepted
-	// Get back a new file descriptor to communicate on
-	client_addr_size = sizeof client_addr;
-	newsockfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
-	if (newsockfd < 0) {
-		perror("accept");
-		exit(EXIT_FAILURE);
-	}
+		// Accept a connection - blocks until a connection is ready to be accepted
+		// Get back a new file descriptor to communicate on
+		client_addr_size = sizeof client_addr;
+		newsockfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
+		if (newsockfd < 0) {
+			perror("accept");
+			exit(EXIT_FAILURE);
+		}
 
-	// Read characters from the connection, then process
-	n = read(newsockfd, buffer, 255); // n is number of characters read
-	if (n < 0) {
-		perror("read");
-		exit(EXIT_FAILURE);
-	}
-	// Null-terminate string
-	buffer[n] = '\0';
 
-	// Write message back
-	printf("Here is the message: %s\n", buffer);
-	n = write(newsockfd, "I got your message", 18);
-	if (n < 0) {
-		perror("write");
-		exit(EXIT_FAILURE);
-	}
+		struct dns_message dns_request = parse_request(newsockfd);
+		if (is_AAAA_record(dns_request) == false){
+			set_rcode(&dns_request, RCODE_ERROR);
+		} else {
+			/* AAAA request is made, forward along to the upstream server */
 
-	close(sockfd);
-	close(newsockfd);
+			int s, upstream_sockfd;
+			struct addrinfo hints, *servinfo, *rp;
+
+			memset(&hints, 0, sizeof hints);
+			hints.ai_family = AF_INET;
+			hints.ai_socktype = SOCK_STREAM;
+			s = getaddrinfo(argv[1], argv[2], &hints, &servinfo);
+			if (s != 0) {
+				fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+				exit(EXIT_FAILURE);
+			}
+			printf("eeeeeeeee?\n");
+			for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
+				upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+				if (upstream_sockfd == -1)
+					continue;
+
+				if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
+					break; // success
+
+				close(upstream_sockfd);	/* close the failed socket */
+			}
+			printf("fffffffffff?\n");
+			if (rp == NULL) {
+				fprintf(stderr, "client: failed to connect\n");
+				exit(EXIT_FAILURE);
+			}
+			freeaddrinfo(servinfo);
+
+			// Send message to server
+			n = write(upstream_sockfd, &dns_request, 68);
+			if (n < 0) {
+				perror("socket");
+				exit(EXIT_FAILURE);
+			}
+			printf("gggggggggggggg?\n");
+
+			// Read message from server
+			n = read(upstream_sockfd, buffer, 255);
+			if (n < 0) {
+				perror("read");
+				exit(EXIT_FAILURE);
+			}
+			printf("hhhhhhhhh?\n");
+			// Null-terminate string
+			buffer[n] = '\0';
+			printf("%s\n", buffer);
+
+			close(upstream_sockfd);
+
+			printf("finished?\n");
+		}
+
+
+
+		// /* process the packet */
+		// printf("Here is the message: %s\n", buffer);
+		// n = write(newsockfd, "I got your message", 18);
+		// if (n < 0) {
+		// 	perror("write");
+		// 	exit(EXIT_FAILURE);
+		// }
+
+		close(sockfd);
+		close(newsockfd);
+	} while (1);
 
     printf("done\n");
     return 0;
 }
 
-int new_listening_socket(char *port){
+int new_listening_socket(char *address, char *port){
     int sockfd, re, s;
 	struct addrinfo hints, *res;
 

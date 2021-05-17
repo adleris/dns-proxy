@@ -117,6 +117,21 @@ struct dns_message parse_request(int fd) {
 }
 
 
+bool is_AAAA_record(struct dns_message dns_request){
+    if (dns_request.question.qtype == TYPE_AAAA) {
+        return true;
+    }
+    return false;
+}
+
+/* handle the flags in the header */
+void set_rcode(struct dns_message *dns_request, uint16_t code){
+    dns_request->header.flags |= RCODE_ERROR;
+}
+
+
+
+/* verbose output ---------------------------------------------------------- */
 
 #if DNS_VERBOSE
 void print_dns_header(struct dns_header header){

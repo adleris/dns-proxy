@@ -17,6 +17,6 @@
 
 
 /* create a new socket (calls socket, bind, listen) */
-int new_listening_socket(char *port);
+int new_listening_socket(char *address, char *port);
 
 #endif
