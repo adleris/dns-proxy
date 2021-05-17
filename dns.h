@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 /* DISPLAY SETTINGS */
 #define DNS_USE_COLOUR 1
@@ -66,6 +67,11 @@ struct dns_message {
     struct dns_answer   answer;
     struct dns_answer   additional;
 };
+
+/* forward declare the structs, so import here */
+#include "output.h"
+
+struct dns_message parse_request(int fd);
 
 void print_dns_header(struct dns_header header);
 void print_dns_question(struct dns_question question);
