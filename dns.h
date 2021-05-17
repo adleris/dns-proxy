@@ -9,8 +9,8 @@
 #include <sys/socket.h>
 
 /* DISPLAY SETTINGS */
-#define DNS_USE_COLOUR 0
-#define DNS_VERBOSE    0
+#define DNS_USE_COLOUR 1
+#define DNS_VERBOSE    1
 
 #if DNS_USE_COLOUR
 #define SET_COLOUR(c) printf("\033[%dm",c)
@@ -27,6 +27,12 @@
 #define TYPE_A      1
 #define TYPE_AAAA   28
 #define CLASS_IN    1
+
+    /* for parsing */
+#define DNS_HEADER_LENGTH 12 /*bytes*/
+#define MAX_URL_LABELS    255   /* given by URL specifications I'm pretty sure */
+
+#define FILENAME          "dns_svr.log"
 
 
 struct dns_header {

@@ -6,22 +6,28 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "dns.h"
 
-#define DNS_HEADER_LENGTH 12 /*bytes*/
-#define MAX_URL_LABELS 255   /* given by URL specifications I'm pretty sure */
-
 #define FILENAME "dns_svr.log"
 
+struct dns_message parse_request(int fd);
 void phase1_output(struct dns_message);
 void print_timestamp(FILE *fp);
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]){
+    int fd = STDIN_FILENO;
+    parse_request(fd);
+}
+
+/* phase 1 */
+struct dns_message parse_request(int fd) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
     int total_message_offset = 0;
-    if (fread(&message_length, sizeof(uint16_t), 1, stdin) != 1) {
+    if (read(fd, &message_length, 1 * sizeof(uint16_t)) != 1 * sizeof(uint16_t)){
+    // if (fread(&message_length, sizeof(uint16_t), 1, stdin) != 1) {
         exit(EXIT_FAILURE);
     }
     message_length = ntohs(message_length);
@@ -34,7 +40,8 @@ int main(int argc, char* argv[]) {
     uint8_t *message = calloc(message_length, sizeof(uint8_t));
     if (message == NULL) {exit(EXIT_FAILURE);}
 
-    if (fread(message, message_length, 1, stdin) != 1){
+    // if (fread(message, message_length, 1, stdin) != 1){
+    if (read(fd, message, message_length * sizeof(message)) != message_length){
         exit(EXIT_FAILURE);
     }
 
@@ -126,7 +133,7 @@ int main(int argc, char* argv[]) {
     // dns_message.additional 
     /* task output */
     phase1_output(dns_message);
-    return 0;
+    return dns_message;
 }
 
 void phase1_output(struct dns_message dns){
