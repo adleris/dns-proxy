@@ -11,8 +11,8 @@
 #include <sys/socket.h>
 
 /* DISPLAY SETTINGS */
-#define DNS_USE_COLOUR 1
-#define DNS_VERBOSE    1
+#define DNS_USE_COLOUR 0
+#define DNS_VERBOSE    0
 
 #if DNS_USE_COLOUR
 #define SET_COLOUR(c) printf("\033[%dm",c)

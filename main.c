@@ -116,7 +116,7 @@ int dns_upstream_connection(char *address, char *port, char *response, char *req
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
 		exit(EXIT_FAILURE);
 	}
-	printf("eeeeeeeee?\n");
+	// printf("eeeeeeeee?\n" );
 	for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
 		upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (upstream_sockfd == -1)
@@ -127,7 +127,7 @@ int dns_upstream_connection(char *address, char *port, char *response, char *req
 
 		close(upstream_sockfd);	/* close the failed socket */
 	}
-	printf("fffffffffff?\n");
+	// printf("fffffffffff?\n");
 	if (rp == NULL) {
 		fprintf(stderr, "client: failed to connect\n");
 		exit(EXIT_FAILURE);
@@ -140,7 +140,7 @@ int dns_upstream_connection(char *address, char *port, char *response, char *req
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
-	printf("gggggggggggggg?\n");
+	// printf("gggggggggggggg?\n");
 
 	// Read message from server
 	n = read(upstream_sockfd, buffer, 1);
@@ -148,13 +148,13 @@ int dns_upstream_connection(char *address, char *port, char *response, char *req
 		perror("read");
 		exit(EXIT_FAILURE);
 	}
-	printf("hhhhhhhhh?\n");
+	// printf("hhhhhhhhh?\n");
 	// Null-terminate string
 	buffer[n] = '\0';
 	printf("%s\n", buffer);
 
 	close(upstream_sockfd);
 
-	printf("finished?\n");
+	// printf("finished?\n");
 	return n;
 }
