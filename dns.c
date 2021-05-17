@@ -2,7 +2,7 @@
 
 
 /* phase 1 */
-size_t parse_request(int fd, struct dns_message *dns_request) {
+size_t parse_request(int fd, struct dns_message *dns_request, char *request_buffer) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
     int total_message_offset = 0;
@@ -18,6 +18,12 @@ size_t parse_request(int fd, struct dns_message *dns_request) {
 
     /* next, we want to malloc enough space to hold the entire DNS message */
     uint8_t *message = calloc(message_length, sizeof(uint8_t));
+    /* copy contents of message. Should this just be a single alloc? what about null byte? */
+    request_buffer = calloc(message_length + 1, sizeof(uint8_t)); /* stick a null byte at the end */
+    for (int i = 0; i<message_length; i++){
+        request_buffer[i] = message[i];
+    }
+
     if (message == NULL) {exit(EXIT_FAILURE);}
 
     // if (fread(message, message_length, 1, stdin) != 1){
@@ -126,7 +132,7 @@ bool is_AAAA_record(struct dns_message dns_request){
 
 /* handle the flags in the header */
 void set_rcode(struct dns_message *dns_request, uint16_t code){
-    dns_request->header.flags |= RCODE_ERROR;
+    dns_request->header.flags |= RCODE_ERROR;   // todo make this `code` and test!
 }
 
 

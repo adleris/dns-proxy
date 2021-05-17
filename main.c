@@ -1,7 +1,7 @@
 #include "main.h"
 #include "dns.h"
 
-int dns_upstream_connection(char *address, char *port, struct dns_message *response, struct dns_message *request, int request_len);
+int dns_upstream_connection(char *address, char *port, char *response, char *request, size_t request_len);
 
 int main(int argc, char* argv[]) {
     
@@ -24,13 +24,16 @@ int main(int argc, char* argv[]) {
 		}
 
 		struct dns_message dns_request = {0};
-		size_t dns_request_len = parse_request(newsockfd, &dns_request);
+		char *request_buffer = NULL;
+		size_t dns_request_len = parse_request(newsockfd, &dns_request, request_buffer);
 		if (is_AAAA_record(dns_request) == false){
 			set_rcode(&dns_request, RCODE_ERROR);
 		} else {
 			/* AAAA request is made, forward along to the upstream server */
-			struct dns_message dns_response = {0};
-			int response_len = dns_upstream_connection(argv[1], argv[2], &dns_response, &dns_request, dns_request_len);
+			// struct dns_message dns_response = {0};
+			// int response_len = dns_upstream_connection(argv[1], argv[2], &dns_response, &dns_request, dns_request_len);
+			char *response_buffer = NULL;
+			int response_len = dns_upstream_connection(argv[1], argv[2], response_buffer, request_buffer, dns_request_len);
 		}
 
 
@@ -99,7 +102,7 @@ int new_listening_socket(char *address, char *port){
 }
 
 
-int dns_upstream_connection(char *address, char *port, struct dns_message *response, struct dns_message *request, int request_len){
+int dns_upstream_connection(char *address, char *port, char *response, char *request, size_t request_len){
 	char buffer[256];
 	int s, upstream_sockfd;
 	int read_len=0, n;
@@ -132,7 +135,7 @@ int dns_upstream_connection(char *address, char *port, struct dns_message *respo
 	freeaddrinfo(servinfo);
 
 	// Send message to server
-	n = write(upstream_sockfd, request, request_len);
+	n = write(upstream_sockfd, &request, request_len);
 	if (n < 0) {
 		perror("socket");
 		exit(EXIT_FAILURE);

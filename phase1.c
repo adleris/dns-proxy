@@ -13,5 +13,6 @@
 int main(int argc, char *argv[]){
     struct dns_message dns_request = {0};
     int fd = STDIN_FILENO;
-    parse_request(fd, &dns_request);
+    char *buffer = NULL;
+    parse_request(fd, &dns_request, buffer);
 }
