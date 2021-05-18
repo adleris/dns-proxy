@@ -24,8 +24,9 @@ int main(int argc, char* argv[]) {
 		}
 
 		struct dns_message dns_request = {0};
-		char *request_buffer = NULL;
-		size_t dns_request_len = parse_request(newsockfd, &dns_request, request_buffer);
+		char  *request_buffer = NULL;
+		size_t dns_request_len = parse_request(newsockfd, &dns_request, &request_buffer);
+
 		if (is_AAAA_record(dns_request) == false){
 			set_rcode(&dns_request, RCODE_ERROR);
 		} else {
@@ -103,7 +104,7 @@ int new_listening_socket(char *address, char *port){
 
 
 int dns_upstream_connection(char *address, char *port, char *response, char *request, size_t request_len){
-	char buffer[256];
+	char buffer[1024];
 	int s, upstream_sockfd;
 	int read_len=0, n;
 	struct addrinfo hints, *servinfo, *rp;
@@ -116,41 +117,49 @@ int dns_upstream_connection(char *address, char *port, char *response, char *req
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
 		exit(EXIT_FAILURE);
 	}
-	printf("eeeeeeeee?\n");
+	printf("resolved address of host\n");
 	for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
 		upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (upstream_sockfd == -1)
 			continue;
 
-		if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
+		if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1){
 			break; // success
+		}
 
 		close(upstream_sockfd);	/* close the failed socket */
 	}
-	printf("fffffffffff?\n");
 	if (rp == NULL) {
 		fprintf(stderr, "client: failed to connect\n");
 		exit(EXIT_FAILURE);
 	}
 	freeaddrinfo(servinfo);
+	printf("socket connected\n");
 
 	// Send message to server
-	n = write(upstream_sockfd, &request, request_len);
+	n = write(upstream_sockfd, request, request_len+2);
 	if (n < 0) {
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
-	printf("gggggggggggggg?\n");
+
+	printf("written to socket:\n\trequest_buffer = <<");
+    fwrite(request, request_len, 1, stdout);
+    printf(">> with (written) length %d\n\n", n);
 
 	// Read message from server
-	n = read(upstream_sockfd, buffer, 1);
+	while ((n = read(upstream_sockfd, buffer + read_len, 1)) > 0){
+		printf(".");
+		read_len += n;
+	}
 	if (n < 0) {
 		perror("read");
 		exit(EXIT_FAILURE);
 	}
+	printf("readlen %d\tn %d\n", read_len, n);
 	printf("hhhhhhhhh?\n");
 	// Null-terminate string
-	buffer[n] = '\0';
+	buffer[read_len] = '\0';
 	printf("%s\n", buffer);
 
 	close(upstream_sockfd);

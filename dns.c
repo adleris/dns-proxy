@@ -2,7 +2,7 @@
 
 
 /* phase 1 */
-size_t parse_request(int fd, struct dns_message *dns_request, char *request_buffer) {
+size_t parse_request(int fd, struct dns_message *dns_request, char **request_buffer) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
     int total_message_offset = 0;
@@ -18,17 +18,19 @@ size_t parse_request(int fd, struct dns_message *dns_request, char *request_buff
 
     /* next, we want to malloc enough space to hold the entire DNS message */
     uint8_t *message = calloc(message_length, sizeof(uint8_t));
-    /* copy contents of message. Should this just be a single alloc? what about null byte? */
-    request_buffer = calloc(message_length + 1, sizeof(uint8_t)); /* stick a null byte at the end */
-    for (int i = 0; i<message_length; i++){
-        request_buffer[i] = message[i];
-    }
 
     if (message == NULL) {exit(EXIT_FAILURE);}
 
     // if (fread(message, message_length, 1, stdin) != 1){
     if (read(fd, message, message_length * sizeof(message)) != message_length){
         exit(EXIT_FAILURE);
+    }
+
+    /* copy contents of message. Should this just be a single alloc? what about null byte? */
+    *request_buffer = calloc(message_length + 1 + 2, sizeof(uint8_t)); /* stick a null byte at the end */
+    (*(uint16_t**)request_buffer)[0] = message_length;  /* interpret as pointer to uint16_t array, then deference to be the array, and set the first element */
+    for (int i = 0; i<message_length; i++){
+        (*request_buffer)[i+2] = message[i];
     }
 
     struct dns_header header;
@@ -119,7 +121,7 @@ size_t parse_request(int fd, struct dns_message *dns_request, char *request_buff
     // dns_request->additional 
     /* task output */
     phase1_output(*dns_request);
-    return message_length * sizeof(uint16_t);
+    return message_length;
 }
 
 
