@@ -17,12 +17,12 @@ size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_
 #endif
 
     /* next, we want to malloc enough space to hold the entire DNS message */
-    uint8_t *message = calloc(message_length, sizeof(uint8_t));
+    uint8_t *message = calloc(message_length, sizeof(*message));
 
     if (message == NULL) {exit(EXIT_FAILURE);}
 
     // if (fread(message, message_length, 1, stdin) != 1){
-    if (read(fd, message, message_length * sizeof(message)) != message_length){
+    if (read(fd, message, message_length * sizeof(*message)) != message_length * sizeof(*message)){
         exit(EXIT_FAILURE);
     }
 
@@ -32,6 +32,14 @@ size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_
     for (int i = 0; i<message_length; i++){
         (*request_buffer)[i+2] = message[i];
     }
+
+    FILE *msgfp = fopen("msgbuf", "w");
+    fwrite(message, sizeof(*message), message_length, msgfp);
+    fclose(msgfp);
+
+    FILE *reqfp = fopen("reqbuf", "w");
+    fwrite(*request_buffer, sizeof(**request_buffer), message_length+2, reqfp);
+    fclose(reqfp);
 
     struct dns_header header;
     header.id      = ntohs(* (uint16_t*)message);
