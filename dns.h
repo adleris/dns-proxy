@@ -77,7 +77,7 @@ struct dns_message {
 /* forward declare the structs, so import here */
 #include "output.h"
 
-size_t parse_request(int fd, struct dns_message *dns_request, char **request_buffer);
+size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer);
 
 bool is_AAAA_record(struct dns_message dns_request);
 void set_rcode(struct dns_message *dns_request, uint16_t code);

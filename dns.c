@@ -2,7 +2,7 @@
 
 
 /* phase 1 */
-size_t parse_request(int fd, struct dns_message *dns_request, char **request_buffer) {
+size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer) {
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
     int total_message_offset = 0;
