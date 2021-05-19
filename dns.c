@@ -27,7 +27,7 @@ size_t parse_request(int fd, struct dns_message *dns_request, char **request_buf
     }
 
     /* copy contents of message. Should this just be a single alloc? what about null byte? */
-    *request_buffer = calloc(message_length + 1 + 2, sizeof(uint8_t)); /* stick a null byte at the end */
+    *request_buffer = calloc(message_length + 1 + 2, sizeof(uint8_t)); /* stick a null byte at the end, plus message length */
     (*(uint16_t**)request_buffer)[0] = message_length;  /* interpret as pointer to uint16_t array, then deference to be the array, and set the first element */
     for (int i = 0; i<message_length; i++){
         (*request_buffer)[i+2] = message[i];

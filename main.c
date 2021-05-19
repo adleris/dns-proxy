@@ -26,32 +26,36 @@ int main(int argc, char* argv[]) {
 		struct dns_message dns_request = {0};
 		char  *request_buffer = NULL;
 		size_t dns_request_len = parse_request(newsockfd, &dns_request, &request_buffer);
+		char *response_buffer = NULL;
+		int response_len;
 
 		if (is_AAAA_record(dns_request) == false){
 			set_rcode(&dns_request, RCODE_ERROR);
+			/* return the modified request back to sender as response */
+			response_buffer = request_buffer;
+			response_len = dns_request_len;
 		} else {
 			/* AAAA request is made, forward along to the upstream server */
 			// struct dns_message dns_response = {0};
 			// int response_len = dns_upstream_connection(argv[1], argv[2], &dns_response, &dns_request, dns_request_len);
-			char *response_buffer = NULL;
-			int response_len = dns_upstream_connection(argv[1], argv[2], response_buffer, request_buffer, dns_request_len);
+			response_len = dns_upstream_connection(argv[1], argv[2], response_buffer, request_buffer, dns_request_len);
 		}
 
-
-
-		// /* process the packet */
-		// printf("Here is the message: %s\n", buffer);
-		// n = write(newsockfd, "I got your message", 18);
-		// if (n < 0) {
-		// 	perror("write");
-		// 	exit(EXIT_FAILURE);
-		// }
+		/* return the packet back to the client over that original connection */
+		// write(STDIN_FILENO, "responding to our client request\n\t<<", strlen("responding to our client request\n\t<<"));
+		// write(STDIN_FILENO, response_buffer, response_len);
+		// write(STDIN_FILENO, ">>\n\t^that was our response buffer", strlen(">>\n^that was our response buffer"));
+		// printf("\t response buffer is at pointer @%p\n", response_buffer);
+		n = write(newsockfd, response_buffer, response_len);
+		if (n < 0) {
+			perror("write");
+			exit(EXIT_FAILURE);
+		}
 
 		close(sockfd);
 		close(newsockfd);
 	} while (1);
 
-    printf("done\n");
     return 0;
 }
 
@@ -143,12 +147,14 @@ int dns_upstream_connection(char *address, char *port, char *response, char *req
 		exit(EXIT_FAILURE);
 	}
 
+	FILE *FD = fopen("out", "w");
 	printf("written to socket:\n\trequest_buffer = <<");
-    fwrite(request, request_len, 1, stdout);
+    fwrite(request, request_len, 1, FD);
     printf(">> with (written) length %d\n\n", n);
+	fclose(FD);
 
 	// Read message from server
-	while ((n = read(upstream_sockfd, buffer + read_len, 1)) > 0){
+	while ((n = read(upstream_sockfd, buffer + read_len, 1024)) > 0){
 		printf(".");
 		read_len += n;
 	}
