@@ -115,7 +115,7 @@ int new_listening_socket(char *address, char *port){
 int dns_upstream_connection(char *address, char *port, char *response, uint8_t *request, size_t request_len){
 	char buffer[1024];
 	// int s, upstream_sockfd;
-	int read_len=0, n;
+	int read_len=0, n=0;
 	// struct addrinfo hints, *servinfo, *rp;
 	
 	struct in_addr iaddr;
@@ -126,23 +126,27 @@ int dns_upstream_connection(char *address, char *port, char *response, uint8_t *
 	int connfd = 0;
 	memset(&serv_addr, 0, sizeof serv_addr);
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(0xc0a80001); // 0xc0a80001
-	serv_addr.sin_port = htons(atoi(port));
+	serv_addr.sin_addr.s_addr = inet_addr(address);
+	serv_addr.sin_port = htons((uint16_t)53);
 
 	connfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (connfd < 0) printf("socket connection error");
-	connect(connfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	int y;
+	y = connect(connfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
 	/* send data */
-	int x;
-	x = write(connfd, request, request_len);
-	// x = write(connfd, "please respond to me", sizeof("please respond to me"));
+	int x=0;
+	x = write(connfd, request, request_len+2);
+	printf("wrote to server with length %d\n", x);
 
 	FILE *fp1 = fopen("out1", "w");
 	FILE *fp2 = fopen("out2", "w");
 	x=fwrite(request, sizeof(char), request_len, fp1);
 	x=fwrite(request, sizeof(char), request_len+2, fp2);
+	fclose(fp1);
+	fclose(fp2);
 
+	printf("trying to recieve server data...\n");
 	/* receive data */
 	while ((n = read(connfd, buffer, 1023)) > 0){
 		printf("received data (%d bytes): ", n);
@@ -208,5 +212,10 @@ int dns_upstream_connection(char *address, char *port, char *response, uint8_t *
 	// close(upstream_sockfd);
 
 	printf("finished?\n");
+	fwrite(buffer, 1023, 1, stdout);
+	printf("n is %d\n", n);
+	FILE *fo = fopen("output", "w");
+	fwrite(buffer, 1023, 1, fo);
+	fclose(fo);
 	return n;
 }
