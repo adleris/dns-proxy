@@ -147,7 +147,7 @@ void set_rcode_dns(struct dns_message *dns_request, uint16_t code){
 }
 
 void set_rcode_char(uint8_t *request_buffer, uint16_t code){
-    ((uint16_t*)request_buffer)[2] |= code;
+    ((uint16_t*)request_buffer)[RCODE_POS_IN_BUFFER] |= code;
 }
 
 

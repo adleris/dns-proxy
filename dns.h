@@ -40,7 +40,8 @@
 
 /* bitwise flags */
 /* RCODE is 4 bits long */
-#define RCODE_ERROR 0x4     /* "not implemented" */
+#define RCODE_POS_IN_BUFFER 2
+#define RCODE_ERROR 0x4
 
 
 struct dns_header {
