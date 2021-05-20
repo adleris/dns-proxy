@@ -2,7 +2,7 @@
 
 
 /* phase 1 */
-size_t read_client_request(int fd, uint8_t **full_message, uint8_t **message){
+size_t read_client_request(int fd, uint8_t **full_message){
     /* read in the length of the message and fix byte-ordering */
     uint16_t message_length;
     if (read(fd, &message_length, 1 * sizeof(uint16_t)) != 1 * sizeof(uint16_t)){
@@ -16,20 +16,18 @@ size_t read_client_request(int fd, uint8_t **full_message, uint8_t **message){
 #endif
 
     /* next, we want to malloc enough space to hold the entire DNS message */
-    *message = calloc(message_length, sizeof(**message));
+    *full_message = calloc(message_length + 1 + TWO_BYTE_HEADER, sizeof(uint8_t)); /* stick a null byte at the end, plus message length */
 
-    if (*message == NULL) {exit(EXIT_FAILURE);}
+    /* store message length at start of buffer */
+    (*(uint16_t**)full_message)[0] = raw_message_length;
 
-    if (read(fd, *message, message_length * sizeof(**message)) != message_length * sizeof(**message)){
+
+    if (*full_message == NULL) {exit(EXIT_FAILURE);}
+
+    if (read(fd, *full_message + TWO_BYTE_HEADER, message_length * sizeof(**full_message)) != message_length * sizeof(**full_message)){
         exit(EXIT_FAILURE);
     }
 
-    /* copy contents of message */
-    *full_message = calloc(message_length + 1 + 2, sizeof(uint8_t)); /* stick a null byte at the end, plus message length */
-    (*(uint16_t**)full_message)[0] = raw_message_length;  /* interpret as pointer to uint16_t array, then deference to be the array, and set the first element */
-    for (int i = 0; i<message_length; i++){
-        (*full_message)[i+2] = (*message)[i];
-    }
     return message_length;
 }
 
@@ -37,9 +35,9 @@ size_t read_client_request(int fd, uint8_t **full_message, uint8_t **message){
 
 size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer) {
 
-    uint8_t *message;
     /* read in the length of the message and fix byte-ordering */
-    uint16_t message_length = read_client_request(fd, request_buffer, &message);
+    uint16_t message_length = read_client_request(fd, request_buffer);
+    uint8_t *message = *request_buffer+TWO_BYTE_HEADER;
     int total_message_offset = 0;
 
     struct dns_header header;

@@ -79,7 +79,7 @@ struct dns_message {
 /* forward declare the structs, so import here */
 #include "output.h"
 
-size_t read_client_request(int fd, uint8_t **full_message, uint8_t **message);
+size_t read_client_request(int fd, uint8_t **full_message);
 size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer);
 
 bool is_AAAA_record(struct dns_message dns_request);
