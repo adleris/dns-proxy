@@ -46,7 +46,9 @@ int main(int argc, char* argv[]) {
 
 		/* return the packet back to the client over that original connection */
 		n = write(newsockfd, response_buffer, response_len);
-		printf("sent %d bytes\n", n);
+#if DNS_VERBOSE
+		printf("sent %d bytes to client\n", n);
+#endif
 		if (n < 0) {
 			perror("write");
 			exit(EXIT_FAILURE);
@@ -136,12 +138,11 @@ size_t dns_upstream_connection(char *address, char *port, uint8_t **response, ui
 	// if (rp == NULL) {
 	// 	fprintf(stderr, "client: failed to connect\n");
 	// 	exit(EXIT_FAILURE);
-
 	char buffer[1024];
 	// int s, upstream_sockfd;
 	int read_len=0/*, n=0*/;
 	// struct addrinfo hints, *servinfo, *rp;
-	
+
 	struct in_addr iaddr;
 
 	inet_pton(AF_INET, address, &iaddr);
@@ -151,7 +152,7 @@ size_t dns_upstream_connection(char *address, char *port, uint8_t **response, ui
 	memset(&serv_addr, 0, sizeof serv_addr);
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = inet_addr(address);
-	serv_addr.sin_port = htons((uint16_t)53);
+	serv_addr.sin_port = htons((uint16_t)atoi(port));
 
 	connfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (connfd < 0)
@@ -167,6 +168,10 @@ size_t dns_upstream_connection(char *address, char *port, uint8_t **response, ui
 	if (writelen != request_len) {
 		perror("write");
 	}
+#if DNS_VERBOSE
+	printf("wrote data (%d bytes) to upstream\n", writelen);
+#endif
+
 
 	/* receive data */
 	read_len = read(connfd, buffer+read_len, 1023);
