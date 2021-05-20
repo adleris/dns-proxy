@@ -33,10 +33,9 @@ size_t read_client_request(int fd, uint8_t **full_message){
 
 
 
-size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer) {
+size_t parse_request(struct dns_message *dns_request, uint8_t **request_buffer, size_t message_length) {
 
     /* read in the length of the message and fix byte-ordering */
-    uint16_t message_length = read_client_request(fd, request_buffer);
     uint8_t *message = *request_buffer+TWO_BYTE_HEADER;
     int total_message_offset = 0;
 

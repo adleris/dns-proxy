@@ -80,7 +80,7 @@ struct dns_message {
 #include "output.h"
 
 size_t read_client_request(int fd, uint8_t **full_message);
-size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer);
+size_t parse_request(struct dns_message *dns_request, uint8_t **request_buffer, size_t message_length);
 
 bool is_AAAA_record(struct dns_message dns_request);
 void set_rcode_dns(struct dns_message *dns_request, uint16_t code);

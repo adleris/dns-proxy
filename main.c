@@ -14,10 +14,13 @@ int main(int argc, char* argv[]) {
 		sockfd = new_listening_socket(NULL, QUERY_PORT_STR);
 		newsockfd = accept_client_connection(sockfd);
 
-		/* read and parse client connection */
-		struct dns_message dns_request = {0};
+		/* read from client connection */
 		uint8_t *request_buffer = NULL;
-		size_t   request_len = parse_request(newsockfd, &dns_request, &request_buffer);
+		size_t message_length = read_client_request(newsockfd, &request_buffer);
+
+		/* parse buffer from client into dns message */
+		struct dns_message dns_request = {0};
+		size_t   request_len = parse_request(&dns_request, &request_buffer, message_length);
 		uint8_t *response_buffer = NULL;
 		size_t   response_len;
 
