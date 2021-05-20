@@ -16,7 +16,19 @@
 #define ACCEPTED_QTYPE TYPE_AAAA
 
 
+/********************* client connection *********************/
 /* create a new socket (calls socket, bind, listen) */
 int new_listening_socket(char *address, char *port);
+
+/* accept a client socket */
+int accept_client_connection(int sockfd);
+
+
+/******************** upstream connection *********************/
+/* create a connection to the upstream: send and receive data */
+size_t dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len);
+
+/* establish connection to upstream */
+int connect_to_upstream(char *address, char *port);
 
 #endif

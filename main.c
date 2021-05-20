@@ -4,28 +4,17 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-size_t dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len);
-
 int main(int argc, char* argv[]) {
     
     int sockfd, newsockfd, n;
 
-	struct sockaddr_storage client_addr;
-	socklen_t client_addr_size;
-
 	/* set up answer and response loop */
-	do {
+	while(1) {
+		/* accept incoming client connection */
 		sockfd = new_listening_socket(NULL, QUERY_PORT_STR);
+		newsockfd = accept_client_connection(sockfd);
 
-		// Accept a connection - blocks until a connection is ready to be accepted
-		// Get back a new file descriptor to communicate on
-		client_addr_size = sizeof client_addr;
-		newsockfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
-		if (newsockfd < 0) {
-			perror("accept");
-			exit(EXIT_FAILURE);
-		}
-
+		/* read and parse client connection */
 		struct dns_message dns_request = {0};
 		uint8_t *request_buffer = NULL;
 		size_t   request_len = parse_request(newsockfd, &dns_request, &request_buffer);
@@ -56,10 +45,11 @@ int main(int argc, char* argv[]) {
 
 		close(sockfd);
 		close(newsockfd);
-	} while (1);
+	}
 
     return 0;
 }
+
 
 int new_listening_socket(char *address, char *port){
     int sockfd, re, s;
@@ -109,58 +99,28 @@ int new_listening_socket(char *address, char *port){
 }
 
 
+int accept_client_connection(int sockfd){
+	int newsockfd;
+	struct sockaddr_storage client_addr;
+	socklen_t client_addr_size;
+
+	// Accept a connection - blocks until a connection is ready to be accepted
+	// Get back a new file descriptor to communicate on
+	client_addr_size = sizeof client_addr;
+	newsockfd = accept(sockfd, (struct sockaddr*)&client_addr, &client_addr_size);
+	if (newsockfd < 0) {
+		perror("accept");
+		exit(EXIT_FAILURE);
+	}
+	return newsockfd;
+}
+
+
 size_t dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len){
-	// char buffer[256];
-	// int s, upstream_sockfd;
-	// int read_len=0, n;
-	// struct addrinfo hints, *servinfo, *rp;
-
-	// memset(&hints, 0, sizeof hints);
-	// hints.ai_family = AF_INET;
-	// hints.ai_socktype = SOCK_STREAM;
-	// s = getaddrinfo(address, port, &hints, &servinfo);
-	// if (s != 0) {
-	// 	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-	// 	exit(EXIT_FAILURE);
-	// }
-	// // printf("eeeeeeeee?\n" );
-	// for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
-	// 	upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-	// 	if (upstream_sockfd == -1)
-	// 		continue;
-
-	// 	if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
-	// 		break; // success
-
-	// 	close(upstream_sockfd);	/* close the failed socket */
-	// }
-	// // printf("fffffffffff?\n");
-	// if (rp == NULL) {
-	// 	fprintf(stderr, "client: failed to connect\n");
-	// 	exit(EXIT_FAILURE);
 	char buffer[1024];
-	// int s, upstream_sockfd;
-	int read_len=0/*, n=0*/;
-	// struct addrinfo hints, *servinfo, *rp;
+	int read_len=0, connfd;
 
-	struct in_addr iaddr;
-
-	inet_pton(AF_INET, address, &iaddr);
-
-	struct sockaddr_in serv_addr;
-	int connfd = 0;
-	memset(&serv_addr, 0, sizeof serv_addr);
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = inet_addr(address);
-	serv_addr.sin_port = htons((uint16_t)atoi(port));
-
-	connfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (connfd < 0)
-		printf("socket connection error");
-	int y;
-	y = connect(connfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-	if (y != 0)
-		perror("connect");
+	connfd = connect_to_upstream(address, port);
 
 	/* send data */
 	int writelen=0;
@@ -186,4 +146,24 @@ size_t dns_upstream_connection(char *address, char *port, uint8_t **response, ui
 
 	close(connfd);
 	return (size_t) read_len;
+}
+
+
+int connect_to_upstream(char *address, char *port){
+	struct sockaddr_in serv_addr;
+	int connfd;
+
+	memset(&serv_addr, 0, sizeof serv_addr);
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = inet_addr(address);
+	serv_addr.sin_port = htons((uint16_t)atoi(port));
+
+	connfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (connfd < 0) {
+		printf("socket connection error");
+	}
+	if (connect(connfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != 0) {
+		perror("connect");
+	}
+	return connfd;
 }
