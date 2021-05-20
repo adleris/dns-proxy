@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-int dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len);
+size_t dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len);
 
 int main(int argc, char* argv[]) {
     
@@ -45,12 +45,8 @@ int main(int argc, char* argv[]) {
 		}
 
 		/* return the packet back to the client over that original connection */
-#if DNS_VERBOSE
-		write(STDIN_FILENO, "responding to our client request\n\t<<", strlen("responding to our client request\n\t<<"));
-		write(STDIN_FILENO, response_buffer, response_len);
-		write(STDIN_FILENO, ">>\n\t^that was our response buffer", strlen(">>\n^that was our response buffer"));
-#endif
 		n = write(newsockfd, response_buffer, response_len);
+		printf("sent %d bytes\n", n);
 		if (n < 0) {
 			perror("write");
 			exit(EXIT_FAILURE);
@@ -111,7 +107,7 @@ int new_listening_socket(char *address, char *port){
 }
 
 
-int dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len){
+size_t dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len){
 	// char buffer[256];
 	// int s, upstream_sockfd;
 	// int read_len=0, n;
@@ -175,7 +171,7 @@ int dns_upstream_connection(char *address, char *port, uint8_t **response, uint8
 	/* receive data */
 	read_len = read(connfd, buffer+read_len, 1023);
 #if DNS_VERBOSE
-	printf("received data (%d bytes) from upstream\n", n);
+	printf("received data (%d bytes) from upstream\n", read_len);
 #endif
 
 	*response = calloc(read_len, sizeof(*request));
