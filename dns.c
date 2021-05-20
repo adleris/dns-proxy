@@ -10,6 +10,7 @@ size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_
     // if (fread(&message_length, sizeof(uint16_t), 1, stdin) != 1) {
         exit(EXIT_FAILURE);
     }
+    uint16_t raw_message_length = message_length;
     message_length = ntohs(message_length);
 
 #if DNS_VERBOSE
@@ -28,7 +29,7 @@ size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_
 
     /* copy contents of message. Should this just be a single alloc? what about null byte? */
     *request_buffer = calloc(message_length + 1 + 2, sizeof(uint8_t)); /* stick a null byte at the end, plus message length */
-    (*(uint16_t**)request_buffer)[0] = message_length;  /* interpret as pointer to uint16_t array, then deference to be the array, and set the first element */
+    (*(uint16_t**)request_buffer)[0] = raw_message_length;  /* interpret as pointer to uint16_t array, then deference to be the array, and set the first element */
     for (int i = 0; i<message_length; i++){
         (*request_buffer)[i+2] = message[i];
     }
@@ -129,7 +130,7 @@ size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_
     // dns_request->additional 
     /* task output */
     phase1_output(*dns_request);
-    return message_length;
+    return message_length + TWO_BYTE_HEADER;
 }
 
 

@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-int dns_upstream_connection(char *address, char *port, char *response, uint8_t *request, size_t request_len);
+int dns_upstream_connection(char *address, char *port, char **response, uint8_t *request, size_t request_len);
 
 int main(int argc, char* argv[]) {
     
@@ -43,14 +43,15 @@ int main(int argc, char* argv[]) {
 			/* AAAA request is made, forward along to the upstream server */
 			// struct dns_message dns_response = {0};
 			// int response_len = dns_upstream_connection(argv[1], argv[2], &dns_response, &dns_request, dns_request_len);
-			response_len = dns_upstream_connection(argv[1], argv[2], response_buffer, request_buffer, dns_request_len);
+			response_len = dns_upstream_connection(argv[1], argv[2], &response_buffer, request_buffer, dns_request_len);
 		}
 
 		/* return the packet back to the client over that original connection */
-		// write(STDIN_FILENO, "responding to our client request\n\t<<", strlen("responding to our client request\n\t<<"));
-		// write(STDIN_FILENO, response_buffer, response_len);
-		// write(STDIN_FILENO, ">>\n\t^that was our response buffer", strlen(">>\n^that was our response buffer"));
-		// printf("\t response buffer is at pointer @%p\n", response_buffer);
+#if DNS_VERBOSE
+		write(STDIN_FILENO, "responding to our client request\n\t<<", strlen("responding to our client request\n\t<<"));
+		write(STDIN_FILENO, response_buffer, response_len);
+		write(STDIN_FILENO, ">>\n\t^that was our response buffer", strlen(">>\n^that was our response buffer"));
+#endif
 		n = write(newsockfd, response_buffer, response_len);
 		if (n < 0) {
 			perror("write");
@@ -112,7 +113,7 @@ int new_listening_socket(char *address, char *port){
 }
 
 
-int dns_upstream_connection(char *address, char *port, char *response, uint8_t *request, size_t request_len){
+int dns_upstream_connection(char *address, char *port, char **response, uint8_t *request, size_t request_len){
 	char buffer[1024];
 	// int s, upstream_sockfd;
 	int read_len=0, n=0;
@@ -130,92 +131,31 @@ int dns_upstream_connection(char *address, char *port, char *response, uint8_t *
 	serv_addr.sin_port = htons((uint16_t)53);
 
 	connfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (connfd < 0) printf("socket connection error");
+	if (connfd < 0)
+		printf("socket connection error");
 	int y;
 	y = connect(connfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	if (y != 0)
+		perror("connect");
 
 	/* send data */
-	int x=0;
-	x = write(connfd, request, request_len+2);
-	printf("wrote to server with length %d\n", x);
-
-	FILE *fp1 = fopen("out1", "w");
-	FILE *fp2 = fopen("out2", "w");
-	x=fwrite(request, sizeof(char), request_len, fp1);
-	x=fwrite(request, sizeof(char), request_len+2, fp2);
-	fclose(fp1);
-	fclose(fp2);
-
-	printf("trying to recieve server data...\n");
-	/* receive data */
-	while ((n = read(connfd, buffer, 1023)) > 0){
-		printf("received data (%d bytes): ", n);
-		fwrite(buffer, 1023, 1, stdout);
-		printf("$\n");
+	int writelen=0;
+	writelen = write(connfd, request, request_len);
+	if (writelen != request_len) {
+		perror("write");
 	}
 
-	// memset(&hints, 0, sizeof hints);
-	// hints.ai_family = AF_INET;
-	// hints.ai_socktype = SOCK_STREAM;
-	// s = getaddrinfo(address, port, &hints, &servinfo);
-	// if (s != 0) {
-	// 	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-	// 	exit(EXIT_FAILURE);
-	// }
-	// printf("resolved address of host\n");
-	// for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
-	// 	upstream_sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-	// 	if (upstream_sockfd == -1)
-	// 		continue;
+	/* receive data */
+	read_len = read(connfd, buffer+read_len, 1023);
+#if DNS_VERBOSE
+	printf("received data (%d bytes) from upstream\n", n);
+#endif
 
-	// 	if (connect(upstream_sockfd, rp->ai_addr, rp->ai_addrlen) != -1){
-	// 		break; // success
-	// 	}
+	*response = calloc(read_len, sizeof(*request));
+	for (int i = 0; i<read_len;i++){
+		(*response)[i] = buffer[i];
+	}
 
-	// 	close(upstream_sockfd);	/* close the failed socket */
-	// }
-	// if (rp == NULL) {
-	// 	fprintf(stderr, "client: failed to connect\n");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// freeaddrinfo(servinfo);
-	// printf("socket connected\n");
-
-	// // Send message to server
-	// n = write(upstream_sockfd, request, request_len+2);
-	// if (n < 0) {
-	// 	perror("socket");
-	// 	exit(EXIT_FAILURE);
-	// }
-
-	// FILE *FD = fopen("out", "w");
-	// printf("written to socket:\n\trequest_buffer = <<");
-    // fwrite(request, request_len, 1, FD);
-    // printf(">> with (written) length %d\n\n", n);
-	// fclose(FD);
-
-	// // Read message from server
-	// while ((n = read(upstream_sockfd, buffer + read_len, 1024)) > 0){
-	// 	printf(".");
-	// 	read_len += n;
-	// }
-	// if (n < 0) {
-	// 	perror("read");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// printf("readlen %d\tn %d\n", read_len, n);
-	// printf("hhhhhhhhh?\n");
-	// Null-terminate string
-	// buffer[read_len] = '\0';
-	// printf("%s\n", buffer);
-
-	// close(upstream_sockfd);
-
-	printf("finished?\n");
-	fwrite(buffer, 1023, 1, stdout);
-	printf("n is %d\n", n);
-	FILE *fo = fopen("output", "w");
-	fwrite(buffer, 1023, 1, fo);
-	fclose(fo);
-	return n;
+	close(connfd);
+	return read_len;
 }
