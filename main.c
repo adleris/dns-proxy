@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 			/* AAAA request is made, forward along to the upstream server */
 			struct dns_message dns_response = {0};
 			response_len = dns_upstream_connection(argv[1], argv[2], &response_buffer, request_buffer, request_len);
-			response_len = parse_request(&dns_response, &response_buffer, response_len);
+			response_len = parse_request(&dns_response, &response_buffer, response_len-2);
 		}
 
 		/* return the packet back to the client over that original connection */
