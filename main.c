@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-int dns_upstream_connection(char *address, char *port, char **response, uint8_t *request, size_t request_len);
+int dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len);
 
 int main(int argc, char* argv[]) {
     
@@ -27,23 +27,21 @@ int main(int argc, char* argv[]) {
 		}
 
 		struct dns_message dns_request = {0};
-		uint8_t  *request_buffer = NULL;
-		size_t dns_request_len = parse_request(newsockfd, &dns_request, &request_buffer);
-		char *response_buffer = NULL;
-		int response_len;
+		uint8_t *request_buffer = NULL;
+		size_t   request_len = parse_request(newsockfd, &dns_request, &request_buffer);
+		uint8_t *response_buffer = NULL;
+		size_t   response_len;
 
 		if (is_AAAA_record(dns_request) == false){
 			set_rcode_dns(&dns_request, RCODE_ERROR);
 			set_rcode_char(request_buffer, RCODE_ERROR);
-			
+
 			/* return the modified request back to sender as reponse */
 			response_buffer = request_buffer;
-			response_len = dns_request_len;
+			response_len    = request_len;
 		} else {
 			/* AAAA request is made, forward along to the upstream server */
-			// struct dns_message dns_response = {0};
-			// int response_len = dns_upstream_connection(argv[1], argv[2], &dns_response, &dns_request, dns_request_len);
-			response_len = dns_upstream_connection(argv[1], argv[2], &response_buffer, request_buffer, dns_request_len);
+			response_len = dns_upstream_connection(argv[1], argv[2], &response_buffer, request_buffer, request_len);
 		}
 
 		/* return the packet back to the client over that original connection */
@@ -113,7 +111,7 @@ int new_listening_socket(char *address, char *port){
 }
 
 
-int dns_upstream_connection(char *address, char *port, char **response, uint8_t *request, size_t request_len){
+int dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len){
 	// char buffer[256];
 	// int s, upstream_sockfd;
 	// int read_len=0, n;
@@ -186,5 +184,5 @@ int dns_upstream_connection(char *address, char *port, char **response, uint8_t 
 	}
 
 	close(connfd);
-	return read_len;
+	return (size_t) read_len;
 }
