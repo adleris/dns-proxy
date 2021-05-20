@@ -11,8 +11,8 @@
 #include <sys/socket.h>
 
 /* DISPLAY SETTINGS */
-#define DNS_USE_COLOUR 0
-#define DNS_VERBOSE    0
+#define DNS_USE_COLOUR 1
+#define DNS_VERBOSE    1
 
 #if DNS_USE_COLOUR
 #define SET_COLOUR(c) printf("\033[%dm",c)
@@ -79,6 +79,7 @@ struct dns_message {
 /* forward declare the structs, so import here */
 #include "output.h"
 
+size_t read_client_request(int fd, uint8_t **full_message, uint8_t **message);
 size_t parse_request(int fd, struct dns_message *dns_request, uint8_t **request_buffer);
 
 bool is_AAAA_record(struct dns_message dns_request);
