@@ -33,12 +33,12 @@ int main(int argc, char* argv[]) {
 		int response_len;
 
 		if (is_AAAA_record(dns_request) == false){
-			set_rcode(&dns_request, RCODE_ERROR);
-			/* return the modified request back to sender as response */
-			// response_buffer = request_buffer;
-			// response_len = dns_request_len;
-			response_buffer = NULL;
-			response_len = 0;
+			set_rcode_dns(&dns_request, RCODE_ERROR);
+			set_rcode_char(request_buffer, RCODE_ERROR);
+			
+			/* return the modified request back to sender as reponse */
+			response_buffer = request_buffer;
+			response_len = dns_request_len;
 		} else {
 			/* AAAA request is made, forward along to the upstream server */
 			// struct dns_message dns_response = {0};
