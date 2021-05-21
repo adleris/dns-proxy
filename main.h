@@ -15,6 +15,7 @@
 
 #define ACCEPTED_QTYPE TYPE_AAAA
 
+#define RESPONSE_BUFFLEN 1024
 
 /********************* client connection *********************/
 /* create a new socket (calls socket, bind, listen) */

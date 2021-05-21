@@ -132,7 +132,7 @@ int accept_client_connection(int sockfd){
 
 
 size_t dns_upstream_connection(char *address, char *port, uint8_t **response, uint8_t *request, size_t request_len){
-	char buffer[1024];
+	char buffer[RESPONSE_BUFFLEN+1];
 	int read_len=0, connfd;
 
 	connfd = connect_to_upstream(address, port);
@@ -147,18 +147,8 @@ size_t dns_upstream_connection(char *address, char *port, uint8_t **response, ui
 	printf("wrote data (%d bytes) to upstream\n", writelen);
 #endif
 
-
-    // /* receive data, maybe over multiple packets */
-    // int this_read_len = 0, total_read_len=0;
-    // while(1){
-    //     this_read_len = read(connfd, buffer+total_read_len,  (1023-total_read_len) * sizeof(char));
-    //     total_read_len += this_read_len;
-    //     if (total_read_len >= message_length){
-    //         break;
-    //     }
-    // }
-
-	read_len = read(connfd, buffer+read_len, 1023);
+	/* don't think we need to buffer this one */
+	read_len = read(connfd, buffer+read_len, RESPONSE_BUFFLEN);
 #if DNS_VERBOSE
 	printf("received data (%d bytes) from upstream\n", read_len);
 #endif
