@@ -49,9 +49,7 @@ int main(int argc, char* argv[]) {
 			/* only log the packet if error code is not set */
 			// if (! is_rcode_set(&dns_response, RCODE_ERROR)){
 			// }
-			if (dns_response.answer.type != TYPE_AAAA){
-				log_dns_response_packet(dns_response);
-			}
+			log_dns_response_packet(dns_response);
 		}
 
 		/* return the packet back to the client over that original connection */
