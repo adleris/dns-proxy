@@ -57,7 +57,10 @@ void log_dns_response_packet(struct dns_message dns){
         /* answer: print the first matching record */
         print_timestamp(fp);
         fprintf(fp, " %s is at %s\n", domain_name, ipv6_print_string(dns.answer.rdata));
-    } 
+    } else if (dns.answer.type != TYPE_AAAA) {
+        print_timestamp(fp);
+        fprintf(fp, " unimplemented request\n");
+    }
 
     fflush(fp);
     fclose(fp);

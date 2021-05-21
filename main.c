@@ -45,8 +45,11 @@ int main(int argc, char* argv[]) {
 			printf("Response packet:\n");
 #endif
 			response_len = parse_request(&dns_response, &response_buffer, response_len-TWO_BYTE_HEADER);
+			
 			/* only log the packet if error code is not set */
-			if (! is_rcode_set(&dns_response, RCODE_ERROR)){
+			// if (! is_rcode_set(&dns_response, RCODE_ERROR)){
+			// }
+			if (dns_response.answer.type != TYPE_AAAA){
 				log_dns_response_packet(dns_response);
 			}
 		}
