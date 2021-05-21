@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
 			if (is_AAAA_record(dns_response) == true){
 				log_dns_response_packet(dns_response);
 			} else {
+				set_rcode_dns(&dns_request, RCODE_ERROR);
+				set_rcode_char(request_buffer, RCODE_ERROR);
+				
 				/* send back the original packet with the rcode set to 4 */
 				response_buffer = request_buffer;
 				response_len    = request_len;
