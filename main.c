@@ -148,7 +148,16 @@ size_t dns_upstream_connection(char *address, char *port, uint8_t **response, ui
 #endif
 
 
-	/* receive data */
+    // /* receive data, maybe over multiple packets */
+    // int this_read_len = 0, total_read_len=0;
+    // while(1){
+    //     this_read_len = read(connfd, buffer+total_read_len,  (1023-total_read_len) * sizeof(char));
+    //     total_read_len += this_read_len;
+    //     if (total_read_len >= message_length){
+    //         break;
+    //     }
+    // }
+
 	read_len = read(connfd, buffer+read_len, 1023);
 #if DNS_VERBOSE
 	printf("received data (%d bytes) from upstream\n", read_len);

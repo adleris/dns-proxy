@@ -17,15 +17,20 @@ size_t read_client_request(int fd, uint8_t **full_message){
 
     /* next, we want to malloc enough space to hold the entire DNS message */
     *full_message = calloc(message_length + 1 + TWO_BYTE_HEADER, sizeof(uint8_t)); /* stick a null byte at the end, plus message length */
-
+    if (*full_message == NULL) {
+        exit(EXIT_FAILURE);
+    }
     /* store message length at start of buffer */
     (*(uint16_t**)full_message)[0] = raw_message_length;
 
-
-    if (*full_message == NULL) {exit(EXIT_FAILURE);}
-
-    if (read(fd, *full_message + TWO_BYTE_HEADER, message_length * sizeof(**full_message)) != message_length * sizeof(**full_message)){
-        exit(EXIT_FAILURE);
+    /* read, maybe over multiple packets */
+    int this_read_len = 0, total_read_len=0;
+    while(1){
+        this_read_len = read(fd, *full_message + TWO_BYTE_HEADER + total_read_len, (message_length-total_read_len) * sizeof(**full_message));
+        total_read_len += this_read_len;
+        if (total_read_len >= message_length){
+            break;
+        }
     }
 
     return message_length;
