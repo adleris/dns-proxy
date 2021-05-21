@@ -49,7 +49,13 @@ int main(int argc, char* argv[]) {
 			/* only log the packet if error code is not set */
 			// if (! is_rcode_set(&dns_response, RCODE_ERROR)){
 			// }
-			log_dns_response_packet(dns_response);
+			if (is_AAAA_record(dns_response) == true){
+				log_dns_response_packet(dns_response);
+			} else {
+				/* send back the original packet with the rcode set to 4 */
+				response_buffer = request_buffer;
+				response_len    = request_len;
+			}
 		}
 
 		/* return the packet back to the client over that original connection */
