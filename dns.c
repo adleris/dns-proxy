@@ -125,8 +125,6 @@ size_t parse_request(struct dns_message *dns_request, uint8_t **request_buffer, 
     dns_request->question = question;
     dns_request->answer = answer;
     // dns_request->additional 
-    /* task output */
-    phase1_output(*dns_request);
     return message_length + TWO_BYTE_HEADER;
 }
 

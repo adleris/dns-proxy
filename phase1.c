@@ -14,6 +14,8 @@ int main(int argc, char *argv[]){
     struct dns_message dns_request = {0};
     int fd = STDIN_FILENO;
     uint8_t *buffer = NULL;
+    
     size_t length = read_client_request(fd, &buffer);
     parse_request(&dns_request, &buffer, length);
+    log_dns_request_packet(dns_request);
 }

@@ -20,7 +20,13 @@ int main(int argc, char* argv[]) {
 
 		/* parse buffer from client into dns message */
 		struct dns_message dns_request = {0};
+#if DNS_VERBOSE
+		printf("Request packet:\n");
+#endif
 		size_t   request_len = parse_request(&dns_request, &request_buffer, message_length);
+		/* log client packet */
+		log_dns_request_packet(dns_request);
+
 		uint8_t *response_buffer = NULL;
 		size_t   response_len;
 
@@ -33,9 +39,12 @@ int main(int argc, char* argv[]) {
 			response_len    = request_len;
 		} else {
 			/* AAAA request is made, forward along to the upstream server */
-			// struct dns_message dns_response = {0};
+			struct dns_message dns_response = {0};
 			response_len = dns_upstream_connection(argv[1], argv[2], &response_buffer, request_buffer, request_len);
-			// response_len = parse_request(&dns_response, &response_buffer, response_len-2);
+#if DNS_VERBOSE
+			printf("Response packet:\n");
+#endif
+			response_len = parse_request(&dns_response, &response_buffer, response_len-TWO_BYTE_HEADER);
 		}
 
 		/* return the packet back to the client over that original connection */

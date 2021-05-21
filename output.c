@@ -1,12 +1,12 @@
 #include "output.h"
 
 
-void phase1_output(struct dns_message dns){
+void log_dns_request_packet(struct dns_message dns){
     /* setup */
     FILE *fp;
     fp = fopen(FILENAME, "w");
 
-    char *domain_name = (char*)calloc(255,sizeof(char));
+    char *domain_name = (char*)calloc(MAX_URL_LABELS, sizeof(char));
     for (int u=0; u<dns.question.num_url_labels; u++){
         strcat(domain_name, dns.question.url[u]);
         if (u+1 < dns.question.num_url_labels){
@@ -33,6 +33,31 @@ void phase1_output(struct dns_message dns){
         print_timestamp(fp);
         fprintf(fp, " unimplemented request\n");
     }
+
+    fflush(fp);
+    fclose(fp);
+    free(domain_name);
+}
+
+void log_dns_response_packet(struct dns_message dns){
+    /* setup */
+    FILE *fp;
+    fp = fopen(FILENAME, "w");
+
+    char *domain_name = (char*)calloc(MAX_URL_LABELS, sizeof(char));
+    for (int u=0; u<dns.question.num_url_labels; u++){
+        strcat(domain_name, dns.question.url[u]);
+        if (u+1 < dns.question.num_url_labels){
+            strcat(domain_name, ".");
+        }
+    }
+
+    /* the response should exist and should be AAAA */
+    if (dns.header.ancount >= 1 && dns.answer.type == TYPE_AAAA){
+        /* answer: print the first matching record */
+        print_timestamp(fp);
+        fprintf(fp, " %s is at %s\n", domain_name, ipv6_print_string(dns.answer.rdata));
+    } 
 
     fflush(fp);
     fclose(fp);

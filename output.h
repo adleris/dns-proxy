@@ -6,7 +6,8 @@
 
 #include "dns.h"
 
-void phase1_output(struct dns_message dns);
+void log_dns_request_packet(struct dns_message dns);
+void log_dns_response_packet(struct dns_message dns);
 void print_timestamp(FILE *fp);
 
 #endif 
