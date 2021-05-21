@@ -107,17 +107,21 @@ size_t parse_request(struct dns_message *dns_request, uint8_t **request_buffer, 
     } else {
         answer.rdlength = 0; // make sure it's 0 // THIS IS DUMB, POTENTIALLY? NO IDEA. use pointers
 #if DNS_VERBOSE
+    COLOUR();
         printf("---- (No Answer) ----\n");
+    RST_COLOUR();
 #endif
     }
 
 #if DNS_VERBOSE
+    COLOUR();
     int left = (int)message_length - total_message_offset;
     printf("---- Additional Record ----\n");
     for (int k=0;k<left;k+=2){   /* k is in octets; +=2 means 2 octet sections */
         printf("0x%04"PRIx16"\t", ntohs(*(uint16_t*)(message+k)));
     }
     printf("\n");
+    RST_COLOUR();
 #endif
 
     /* set outputs */

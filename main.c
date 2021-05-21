@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 			printf("Response packet:\n");
 #endif
 			response_len = parse_request(&dns_response, &response_buffer, response_len-TWO_BYTE_HEADER);
+			log_dns_response_packet(dns_response);
 		}
 
 		/* return the packet back to the client over that original connection */

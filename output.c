@@ -4,7 +4,7 @@
 void log_dns_request_packet(struct dns_message dns){
     /* setup */
     FILE *fp;
-    fp = fopen(FILENAME, "w");
+    fp = fopen(FILENAME, "a");
 
     char *domain_name = (char*)calloc(MAX_URL_LABELS, sizeof(char));
     for (int u=0; u<dns.question.num_url_labels; u++){
@@ -42,7 +42,7 @@ void log_dns_request_packet(struct dns_message dns){
 void log_dns_response_packet(struct dns_message dns){
     /* setup */
     FILE *fp;
-    fp = fopen(FILENAME, "w");
+    fp = fopen(FILENAME, "a");
 
     char *domain_name = (char*)calloc(MAX_URL_LABELS, sizeof(char));
     for (int u=0; u<dns.question.num_url_labels; u++){
