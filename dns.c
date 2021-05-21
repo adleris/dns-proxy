@@ -147,11 +147,15 @@ bool is_AAAA_record(struct dns_message dns_request){
 
 /* handle the flags in the header */
 void set_rcode_dns(struct dns_message *dns_request, uint16_t code){
-    dns_request->header.flags |= code;   // todo make this `code` and test!
+    dns_request->header.flags |= code;
 }
 
 void set_rcode_char(uint8_t *request_buffer, uint16_t code){
     ((uint16_t*)request_buffer)[RCODE_POS_IN_BUFFER] |= code;
+}
+
+bool is_rcode_set(struct dns_message *dns_request, uint16_t code){
+    return (bool) dns_request->header.flags & code;
 }
 
 

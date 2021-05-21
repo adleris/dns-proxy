@@ -85,6 +85,7 @@ size_t parse_request(struct dns_message *dns_request, uint8_t **request_buffer, 
 bool is_AAAA_record(struct dns_message dns_request);
 void set_rcode_dns(struct dns_message *dns_request, uint16_t code);
 void set_rcode_char(uint8_t *request_buffer, uint16_t code);
+bool is_rcode_set(struct dns_message *dns_request, uint16_t code);
 
 void print_dns_header(struct dns_header header);
 void print_dns_question(struct dns_question question);
