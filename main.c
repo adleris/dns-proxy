@@ -46,15 +46,13 @@ int main(int argc, char* argv[]) {
 #endif
 			response_len = parse_request(&dns_response, &response_buffer, response_len-TWO_BYTE_HEADER);
 			
-			/* only log the packet if error code is not set */
-			// if (! is_rcode_set(&dns_response, RCODE_ERROR)){
-			// }
+			/* verify incoming record is AAAA */
 			if (is_AAAA_record(dns_response) == true){
 				log_dns_response_packet(dns_response);
 			} else {
 				set_rcode_dns(&dns_request, RCODE_ERROR);
 				set_rcode_char(request_buffer, RCODE_ERROR);
-				
+
 				/* send back the original packet with the rcode set to 4 */
 				response_buffer = request_buffer;
 				response_len    = request_len;
